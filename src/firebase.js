@@ -1,11 +1,5 @@
 import { initializeApp } from "firebase/app";
-import {
-    getFirestore,
-    doc,
-    getDoc,
-    setDoc,
-    onSnapshot,
-} from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 // Firebase config from environment variables
@@ -22,63 +16,79 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-// Admin emails stored in Firestore for easy management
-// First email from env is automatically added as super admin
+// Super admin from env - has full access
 const SUPER_ADMIN = import.meta.env.VITE_ADMIN_EMAIL?.toLowerCase() || "";
 
-// Get admin emails from Firestore
-export const getAdminEmails = async () => {
-    const docRef = doc(db, "settings", "admins");
+// ROLES:
+// - 'admin': Full access (can add sites, teams, problems, judges)
+// - 'judge': Can only enter balloons (Operations page)
+
+// Get all users with roles from Firestore
+export const getUsers = async () => {
+    const docRef = doc(db, "settings", "users");
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-        const emails = docSnap.data().emails || [];
+        const users = docSnap.data().list || [];
         // Always include super admin
-        if (SUPER_ADMIN && !emails.includes(SUPER_ADMIN)) {
-            emails.push(SUPER_ADMIN);
+        if (SUPER_ADMIN && !users.find((u) => u.email === SUPER_ADMIN)) {
+            users.push({ email: SUPER_ADMIN, role: "admin" });
         }
-        return emails;
+        return users;
     } else {
-        // Initialize with super admin
-        const emails = SUPER_ADMIN ? [SUPER_ADMIN] : [];
-        await setDoc(docRef, { emails });
-        return emails;
+        const users = SUPER_ADMIN
+            ? [{ email: SUPER_ADMIN, role: "admin" }]
+            : [];
+        await setDoc(docRef, { list: users });
+        return users;
     }
 };
 
-// Add admin email
-export const addAdminEmail = async (email) => {
-    const docRef = doc(db, "settings", "admins");
-    const emails = await getAdminEmails();
+// Add user with role
+export const addUser = async (email, role) => {
+    const docRef = doc(db, "settings", "users");
+    const users = await getUsers();
     const normalizedEmail = email.toLowerCase();
 
-    if (!emails.includes(normalizedEmail)) {
-        emails.push(normalizedEmail);
-        await setDoc(docRef, { emails });
+    // Check if already exists
+    const existing = users.find((u) => u.email === normalizedEmail);
+    if (existing) {
+        // Update role
+        existing.role = role;
+    } else {
+        users.push({ email: normalizedEmail, role });
     }
+    await setDoc(docRef, { list: users });
 };
 
-// Remove admin email (cannot remove super admin)
-export const removeAdminEmail = async (email) => {
+// Remove user (cannot remove super admin)
+export const removeUser = async (email) => {
     const normalizedEmail = email.toLowerCase();
     if (normalizedEmail === SUPER_ADMIN) {
         throw new Error("Cannot remove super admin");
     }
 
-    const docRef = doc(db, "settings", "admins");
-    const emails = await getAdminEmails();
-    const filtered = emails.filter((e) => e !== normalizedEmail);
-    await setDoc(docRef, { emails: filtered });
+    const docRef = doc(db, "settings", "users");
+    const users = await getUsers();
+    const filtered = users.filter((u) => u.email !== normalizedEmail);
+    await setDoc(docRef, { list: filtered });
 };
 
-// Check if email is admin (checks against Firestore)
-export const checkIsAdmin = async (email) => {
-    if (!email) return false;
-    const emails = await getAdminEmails();
-    return emails.includes(email.toLowerCase());
+// Get user role
+export const getUserRole = async (email) => {
+    if (!email) return null;
+    const users = await getUsers();
+    const user = users.find((u) => u.email === email.toLowerCase());
+    return user?.role || null;
 };
 
-// Super admin check (from env variable - cannot be changed)
+// Check if email is authorized (any role)
+export const isAuthorized = async (email) => {
+    const role = await getUserRole(email);
+    return role !== null;
+};
+
+// Super admin check
 export const isSuperAdmin = (email) => {
     return email?.toLowerCase() === SUPER_ADMIN;
 };

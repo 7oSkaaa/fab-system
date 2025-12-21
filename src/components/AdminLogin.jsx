@@ -2,8 +2,31 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { FaLock, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 
+// Wrapper for admin-only pages
 export const AdminLogin = ({ children }) => {
-    const { isAdmin, login, register } = useAuth();
+    const { isAdmin } = useAuth();
+
+    if (isAdmin) {
+        return children;
+    }
+
+    return <LoginForm requiredRole="admin" />;
+};
+
+// Wrapper for judge/staff pages (admin OR judge can access)
+export const JudgeLogin = ({ children }) => {
+    const { isAdmin, isJudge } = useAuth();
+
+    if (isAdmin || isJudge) {
+        return children;
+    }
+
+    return <LoginForm requiredRole="judge" />;
+};
+
+// Login Form Component
+const LoginForm = ({ requiredRole }) => {
+    const { login, register } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -25,17 +48,18 @@ export const AdminLogin = ({ children }) => {
         setLoading(false);
     };
 
-    if (isAdmin) {
-        return children;
-    }
+    const titles = {
+        admin: { title: 'Admin Access', desc: 'Sign in with your admin email' },
+        judge: { title: 'Staff Access', desc: 'Sign in with your judge/staff email' }
+    };
 
     return (
         <div className="container flex flex-col items-center justify-center" style={{ minHeight: '100vh', padding: '2rem' }}>
             <div className="card" style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
                 <FaLock size={48} style={{ color: 'var(--color-primary)', marginBottom: 'var(--space-lg)' }} />
-                <h2 style={{ marginTop: 0, marginBottom: 'var(--space-sm)' }}>Admin Access</h2>
+                <h2 style={{ marginTop: 0, marginBottom: 'var(--space-sm)' }}>{titles[requiredRole]?.title}</h2>
                 <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-lg)' }}>
-                    {isRegister ? 'Create your admin account' : 'Sign in with your admin email'}
+                    {isRegister ? 'Create your account' : titles[requiredRole]?.desc}
                 </p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-md">

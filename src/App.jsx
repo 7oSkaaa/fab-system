@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { BalloonProvider, useBalloonContext } from './contexts/BalloonContext';
 import { AuthProvider } from './contexts/AuthContext';
-import { AdminLogin } from './components/AdminLogin';
+import { AdminLogin, JudgeLogin } from './components/AdminLogin';
 import { AdminPage } from './pages/AdminPage';
 import { OperationsPage } from './pages/OperationsPage';
 import { VolunteerPage } from './pages/VolunteerPage';
@@ -32,7 +32,7 @@ const HomePage = () => (
           🔒 <span>Admin Configuration</span>
         </Link>
         <Link to="/ops" className="btn-menu">
-          🔒 <span>Judge / Staff Entry</span>
+          🔑 <span>Judge / Staff Entry</span>
         </Link>
         <Link to="/volunteer" className="btn-menu">
           🚀 <span>Volunteer Dashboard</span>
@@ -72,10 +72,11 @@ const AppContent = () => {
         </AdminLogin>
       } />
       <Route path="/ops" element={
-        <AdminLogin>
+        <JudgeLogin>
           <OperationsPage />
-        </AdminLogin>
+        </JudgeLogin>
       } />
+      {/* Volunteer is PUBLIC - no login required */}
       <Route path="/volunteer" element={<VolunteerPage />} />
       <Route path="/public" element={<PublicPage />} />
     </Routes>

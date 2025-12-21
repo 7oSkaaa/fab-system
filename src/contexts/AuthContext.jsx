@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth, checkIsAdmin, isSuperAdmin, getAdminEmails, addAdminEmail, removeAdminEmail } from '../firebase';
+import { auth, getUserRole, isSuperAdmin, getUsers, addUser, removeUser, isAuthorized } from '../firebase';
 import {
     onAuthStateChanged,
     signInWithEmailAndPassword,
@@ -14,26 +14,32 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [isAdmin, setIsAdmin] = useState(false);
+    const [role, setRole] = useState(null); // 'admin' | 'judge' | null
     const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
-    const [adminEmails, setAdminEmails] = useState([]);
+    const [users, setUsers] = useState([]);
+
+    const loadUserData = async (firebaseUser) => {
+        if (firebaseUser) {
+            const userRole = await getUserRole(firebaseUser.email);
+            setRole(userRole);
+            setIsSuperAdminUser(isSuperAdmin(firebaseUser.email));
+
+            // Load all users for admin
+            if (userRole === 'admin') {
+                const allUsers = await getUsers();
+                setUsers(allUsers);
+            }
+        } else {
+            setRole(null);
+            setIsSuperAdminUser(false);
+            setUsers([]);
+        }
+    };
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setUser(user);
-            if (user) {
-                const adminStatus = await checkIsAdmin(user.email);
-                setIsAdmin(adminStatus);
-                setIsSuperAdminUser(isSuperAdmin(user.email));
-                // Load admin emails for super admin
-                if (isSuperAdmin(user.email)) {
-                    const emails = await getAdminEmails();
-                    setAdminEmails(emails);
-                }
-            } else {
-                setIsAdmin(false);
-                setIsSuperAdminUser(false);
-            }
+            await loadUserData(user);
             setLoading(false);
         });
 
@@ -43,11 +49,12 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         try {
             const result = await signInWithEmailAndPassword(auth, email, password);
-            const adminStatus = await checkIsAdmin(result.user.email);
-            if (!adminStatus) {
+            const authorized = await isAuthorized(result.user.email);
+            if (!authorized) {
                 await signOut(auth);
-                throw new Error('This email is not authorized as admin');
+                throw new Error('This email is not authorized');
             }
+            await loadUserData(result.user);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -56,11 +63,12 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (email, password) => {
         try {
-            const adminStatus = await checkIsAdmin(email);
-            if (!adminStatus) {
-                throw new Error('This email is not authorized as admin');
+            const authorized = await isAuthorized(email);
+            if (!authorized) {
+                throw new Error('This email is not authorized');
             }
-            await createUserWithEmailAndPassword(auth, email, password);
+            const result = await createUserWithEmailAndPassword(auth, email, password);
+            await loadUserData(result.user);
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
@@ -71,16 +79,16 @@ export const AuthProvider = ({ children }) => {
         await signOut(auth);
     };
 
-    const addAdmin = async (email) => {
-        await addAdminEmail(email);
-        const emails = await getAdminEmails();
-        setAdminEmails(emails);
+    const addUserWithRole = async (email, userRole) => {
+        await addUser(email, userRole);
+        const allUsers = await getUsers();
+        setUsers(allUsers);
     };
 
-    const removeAdmin = async (email) => {
-        await removeAdminEmail(email);
-        const emails = await getAdminEmails();
-        setAdminEmails(emails);
+    const removeUserByEmail = async (email) => {
+        await removeUser(email);
+        const allUsers = await getUsers();
+        setUsers(allUsers);
     };
 
     if (loading) {
@@ -90,14 +98,16 @@ export const AuthProvider = ({ children }) => {
     return (
         <AuthContext.Provider value={{
             user,
-            isAdmin,
+            role,
+            isAdmin: role === 'admin',
+            isJudge: role === 'judge',
             isSuperAdmin: isSuperAdminUser,
-            adminEmails,
+            users,
             login,
             register,
             logout,
-            addAdmin,
-            removeAdmin
+            addUser: addUserWithRole,
+            removeUser: removeUserByEmail
         }}>
             {children}
         </AuthContext.Provider>

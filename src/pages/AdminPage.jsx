@@ -5,21 +5,22 @@ import { useAuth } from '../contexts/AuthContext';
 import { SiteManager } from '../components/admin/SiteManager';
 import { TeamManager } from '../components/admin/TeamManager';
 import { ProblemManager } from '../components/admin/ProblemManager';
-import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser, FaPlus, FaTimes, FaCrown } from 'react-icons/fa';
+import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser, FaPlus, FaTimes, FaCrown, FaUserShield, FaGavel } from 'react-icons/fa';
 
-// Account Tab Component
+// Account Tab Component with Role Management
 const AccountTab = ({ user, handleLogout }) => {
-    const { isSuperAdmin, adminEmails, addAdmin, removeAdmin } = useAuth();
+    const { isSuperAdmin, users, addUser, removeUser, role } = useAuth();
     const [newEmail, setNewEmail] = useState('');
+    const [newRole, setNewRole] = useState('judge');
     const [error, setError] = useState('');
 
-    const handleAddAdmin = async () => {
+    const handleAddUser = async () => {
         if (!newEmail || !newEmail.includes('@')) {
             setError('Please enter a valid email');
             return;
         }
         try {
-            await addAdmin(newEmail);
+            await addUser(newEmail, newRole);
             setNewEmail('');
             setError('');
         } catch (err) {
@@ -27,18 +28,21 @@ const AccountTab = ({ user, handleLogout }) => {
         }
     };
 
-    const handleRemoveAdmin = async (email) => {
-        if (window.confirm(`Remove ${email} from admins?`)) {
+    const handleRemoveUser = async (email) => {
+        if (window.confirm(`Remove ${email}?`)) {
             try {
-                await removeAdmin(email);
+                await removeUser(email);
             } catch (err) {
                 setError(err.message);
             }
         }
     };
 
+    const roleLabels = { admin: '👑 Admin', judge: '⚖️ Judge/Staff' };
+    const roleColors = { admin: 'var(--color-accent)', judge: 'var(--color-primary)' };
+
     return (
-        <div className="card" style={{ maxWidth: '600px' }}>
+        <div className="card" style={{ maxWidth: '700px' }}>
             <h3 style={{ marginTop: 0, marginBottom: 'var(--space-lg)' }}>👤 Account</h3>
 
             {/* Current User */}
@@ -47,27 +51,40 @@ const AccountTab = ({ user, handleLogout }) => {
                 <p style={{ fontWeight: '600', margin: 'var(--space-xs) 0 0 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {user?.email}
                     {isSuperAdmin && <FaCrown style={{ color: 'var(--color-accent)' }} title="Super Admin" />}
+                    <span style={{
+                        fontSize: '0.75rem',
+                        padding: '2px 8px',
+                        borderRadius: 'var(--radius-full)',
+                        background: roleColors[role],
+                        color: 'white'
+                    }}>
+                        {roleLabels[role]}
+                    </span>
                 </p>
             </div>
 
-            {/* Admin Management - Only for Super Admin */}
+            {/* User Management - Only for Admins */}
             {isSuperAdmin && (
                 <div style={{ marginBottom: 'var(--space-lg)' }}>
-                    <h4 style={{ marginTop: 0, marginBottom: 'var(--space-md)' }}>👥 Admin Emails</h4>
+                    <h4 style={{ marginTop: 0, marginBottom: 'var(--space-md)' }}>👥 Manage Users</h4>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 'var(--space-md)' }}>
-                        These emails can access Admin and Judge/Staff pages.
+                        <strong>Admins</strong> can access Admin + Judge pages. <strong>Judges</strong> can only enter balloons.
                     </p>
 
-                    {/* Add New Admin */}
-                    <div className="flex gap-sm" style={{ marginBottom: 'var(--space-md)' }}>
+                    {/* Add New User */}
+                    <div className="flex gap-sm" style={{ marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
                         <input
                             type="email"
                             value={newEmail}
                             onChange={(e) => setNewEmail(e.target.value)}
-                            placeholder="new-admin@email.com"
-                            style={{ flex: 1 }}
+                            placeholder="email@example.com"
+                            style={{ flex: 1, minWidth: '200px' }}
                         />
-                        <button onClick={handleAddAdmin} className="btn-primary">
+                        <select value={newRole} onChange={(e) => setNewRole(e.target.value)} style={{ width: '140px' }}>
+                            <option value="judge">⚖️ Judge</option>
+                            <option value="admin">👑 Admin</option>
+                        </select>
+                        <button onClick={handleAddUser} className="btn-primary">
                             <FaPlus /> Add
                         </button>
                     </div>
@@ -76,24 +93,34 @@ const AccountTab = ({ user, handleLogout }) => {
                         <p style={{ color: 'var(--color-error)', fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>{error}</p>
                     )}
 
-                    {/* Admin List */}
+                    {/* User List */}
                     <div className="flex flex-col gap-sm">
-                        {adminEmails.map(email => (
-                            <div key={email} className="flex justify-between items-center" style={{
+                        {users.map(u => (
+                            <div key={u.email} className="flex justify-between items-center" style={{
                                 padding: 'var(--space-sm) var(--space-md)',
                                 background: 'var(--bg-elevated)',
                                 borderRadius: 'var(--radius-sm)',
                                 border: '1px solid var(--border-color)'
                             }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    {email}
-                                    {email === user?.email?.toLowerCase() && (
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                    {u.role === 'admin' ? <FaUserShield style={{ color: roleColors.admin }} /> : <FaGavel style={{ color: roleColors.judge }} />}
+                                    {u.email}
+                                    {u.email === user?.email?.toLowerCase() && (
                                         <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)' }}>(you)</span>
                                     )}
+                                    <span style={{
+                                        fontSize: '0.7rem',
+                                        padding: '2px 6px',
+                                        borderRadius: 'var(--radius-full)',
+                                        background: roleColors[u.role],
+                                        color: 'white'
+                                    }}>
+                                        {u.role}
+                                    </span>
                                 </span>
-                                {email !== user?.email?.toLowerCase() && (
+                                {u.email !== user?.email?.toLowerCase() && (
                                     <button
-                                        onClick={() => handleRemoveAdmin(email)}
+                                        onClick={() => handleRemoveUser(u.email)}
                                         style={{ background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', padding: '4px' }}
                                     >
                                         <FaTimes />
