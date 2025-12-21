@@ -1,0 +1,56 @@
+/* CSS Variables & Design System - Theme 7.0 (Fancy Dark) */
+:root {
+  /* Brand Colors - Vibrant on Dark */
+  --color-primary: #8b5cf6;   /* Purple */
+  --color-secondary: #06b6d4; /* Cyan */
+  --color-accent: #f59e0b;    /* Amber */
+  
+  /* Status Colors */
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  
+  /* Dark Backgrounds */
+  --bg-base: #0f0f1a;
+  --bg-card: #1a1a2e;
+  --bg-elevated: #252542;
+  --bg-hover: #30304d;
+  
+  /* Text */
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+
+  /* Balloon Colors */
+  --balloon-red: #f43f5e;
+  --balloon-green: #22c55e;
+  --balloon-blue: #3b82f6;
+  --balloon-yellow: #fbbf24;
+  --balloon-purple: #a855f7;
+  --balloon-orange: #f97316;
+  --balloon-pink: #ec4899;
+  --balloon-teal: #14b8a6;
+  
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  
+  /* Borders & Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+  --border-color: rgba(139, 92, 246, 0.3);
+
+  /* Shadows & Glows */
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
+
+  /* Typography */
+  --font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
