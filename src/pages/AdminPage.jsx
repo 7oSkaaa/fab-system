@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
+import { useAuth } from '../contexts/AuthContext';
 import { SiteManager } from '../components/admin/SiteManager';
 import { TeamManager } from '../components/admin/TeamManager';
 import { ProblemManager } from '../components/admin/ProblemManager';
-import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash } from 'react-icons/fa';
+import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaKey } from 'react-icons/fa';
 
 export const AdminPage = () => {
     const { resetData, sites, teams, problems, balloons } = useBalloonContext();
+    const { changePassword, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('sites');
+    const [newPassword, setNewPassword] = useState('');
+    const [passwordMsg, setPasswordMsg] = useState('');
 
     const handleReset = () => {
         if (window.confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
@@ -16,10 +20,22 @@ export const AdminPage = () => {
         }
     };
 
+    const handleChangePassword = async () => {
+        if (newPassword.length < 4) {
+            setPasswordMsg('Password must be at least 4 characters');
+            return;
+        }
+        await changePassword(newPassword);
+        setNewPassword('');
+        setPasswordMsg('Password changed successfully!');
+        setTimeout(() => setPasswordMsg(''), 3000);
+    };
+
     const tabs = [
         { id: 'sites', label: 'Sites', icon: <FaMapMarkerAlt />, count: sites.length },
         { id: 'problems', label: 'Problems', icon: <FaPalette />, count: problems.length },
         { id: 'teams', label: 'Teams', icon: <FaUsers />, count: teams.length },
+        { id: 'settings', label: 'Settings', icon: <FaKey /> },
         { id: 'danger', label: 'Reset', icon: <FaTrash />, danger: true },
     ];
 
@@ -121,6 +137,48 @@ export const AdminPage = () => {
                 {activeTab === 'sites' && <SiteManager />}
                 {activeTab === 'problems' && <ProblemManager />}
                 {activeTab === 'teams' && <TeamManager />}
+                {activeTab === 'settings' && (
+                    <div className="card" style={{ maxWidth: '500px' }}>
+                        <h3 style={{ marginTop: 0, marginBottom: 'var(--space-lg)' }}>
+                            🔐 Admin Settings
+                        </h3>
+
+                        {/* Change Password */}
+                        <div style={{ marginBottom: 'var(--space-lg)' }}>
+                            <label style={{ display: 'block', marginBottom: 'var(--space-sm)', fontWeight: '600' }}>
+                                Change Admin Password
+                            </label>
+                            <div className="flex gap-sm">
+                                <input
+                                    type="password"
+                                    value={newPassword}
+                                    onChange={(e) => setNewPassword(e.target.value)}
+                                    placeholder="New password"
+                                    style={{ flex: 1 }}
+                                />
+                                <button onClick={handleChangePassword} className="btn-primary">
+                                    Update
+                                </button>
+                            </div>
+                            {passwordMsg && (
+                                <p style={{
+                                    marginTop: 'var(--space-sm)',
+                                    color: passwordMsg.includes('success') ? 'var(--color-success)' : 'var(--color-error)',
+                                    fontSize: '0.9rem'
+                                }}>
+                                    {passwordMsg}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Logout */}
+                        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 'var(--space-lg)' }}>
+                            <button onClick={logout} className="btn-secondary" style={{ width: '100%' }}>
+                                🚪 Logout
+                            </button>
+                        </div>
+                    </div>
+                )}
                 {activeTab === 'danger' && (
                     <div className="card" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', maxWidth: '500px' }}>
                         <h3 style={{ color: 'var(--color-error)', marginTop: 0, marginBottom: 'var(--space-md)' }}>

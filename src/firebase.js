@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 const firebaseConfig = {
     apiKey: "AIzaSyB6KDYd__t2hfucT39xLRgWv8vX1wQtzLk",
@@ -13,5 +13,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
-// Admin password (simple protection - not highly secure, but works for this use case)
-export const ADMIN_PASSWORD = "fab2024"; // Change this to your desired password
+// Get admin password from Firestore (or create default if not exists)
+export const getAdminPassword = async () => {
+    const docRef = doc(db, "settings", "admin");
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        return docSnap.data().password;
+    } else {
+        // Create default password on first run
+        const defaultPassword = "fab2024";
+        await setDoc(docRef, { password: defaultPassword });
+        return defaultPassword;
+    }
+};
+
+// Update admin password
+export const setAdminPassword = async (newPassword) => {
+    const docRef = doc(db, "settings", "admin");
+    await setDoc(docRef, { password: newPassword });
+};
