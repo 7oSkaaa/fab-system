@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
-import { FaBoxOpen, FaClock, FaMapMarkerAlt, FaCheck, FaHome, FaFilter } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext';
+import { FaBoxOpen, FaClock, FaMapMarkerAlt, FaCheck, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser } from 'react-icons/fa';
 
 export const VolunteerPage = () => {
     const { balloons, teams, sites, problems, markDelivered } = useBalloonContext();
+    const { user, loginWithGoogle, logout } = useAuth();
     const [selectedSiteId, setSelectedSiteId] = useState('all');
+    const [loggingIn, setLoggingIn] = useState(false);
 
     const getProblem = (id) => problems.find(p => p.id === id);
     const getTeam = (id) => teams.find(t => t.id === id);
@@ -23,7 +26,13 @@ export const VolunteerPage = () => {
     pendingBalloons.sort((a, b) => a.timestamp - b.timestamp);
 
     const handleDeliver = (id) => {
-        markDelivered(id);
+        markDelivered(id, user?.email);
+    };
+
+    const handleGoogleLogin = async () => {
+        setLoggingIn(true);
+        await loginWithGoogle();
+        setLoggingIn(false);
     };
 
     return (
@@ -37,6 +46,32 @@ export const VolunteerPage = () => {
                     <FaHome /> Home
                 </Link>
             </header>
+
+            {/* User Login/Info Bar */}
+            <div className="card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-md)' }}>
+                {user ? (
+                    <div className="flex justify-between items-center flex-wrap gap-sm">
+                        <div className="flex items-center gap-sm">
+                            {user.photoURL ? (
+                                <img src={user.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: '50%' }} />
+                            ) : (
+                                <FaUser style={{ color: 'var(--text-muted)' }} />
+                            )}
+                            <span style={{ fontWeight: '500' }}>{user.email}</span>
+                        </div>
+                        <button onClick={logout} className="btn-secondary" style={{ padding: '6px 12px' }}>
+                            <FaSignOutAlt /> Logout
+                        </button>
+                    </div>
+                ) : (
+                    <div className="flex justify-between items-center flex-wrap gap-sm">
+                        <span style={{ color: 'var(--text-muted)' }}>Sign in to track your deliveries</span>
+                        <button onClick={handleGoogleLogin} className="btn-primary" disabled={loggingIn} style={{ padding: '6px 16px' }}>
+                            <FaGoogle /> {loggingIn ? 'Signing in...' : 'Sign in with Google'}
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {/* Site Filter */}
             {sites.length > 0 && (

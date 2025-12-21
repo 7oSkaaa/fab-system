@@ -136,8 +136,12 @@ export const BalloonProvider = ({ children }) => {
         });
     };
 
-    const markDelivered = async (balloonId) => {
-        await updateDoc(doc(db, 'balloons', balloonId), { status: 'delivered' });
+    const markDelivered = async (balloonId, deliveredByEmail) => {
+        await updateDoc(doc(db, 'balloons', balloonId), {
+            status: 'delivered',
+            deliveredBy: deliveredByEmail || 'anonymous',
+            deliveredAt: Date.now()
+        });
     };
 
     const resetData = async () => {

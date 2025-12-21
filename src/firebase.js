@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Firebase config from environment variables
 const firebaseConfig = {
@@ -15,22 +15,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
-// Super admin from env - has full access
+// Super admin from env
 const SUPER_ADMIN = import.meta.env.VITE_ADMIN_EMAIL?.toLowerCase() || "";
 
-// ROLES:
-// - 'admin': Full access (can add sites, teams, problems, judges)
-// - 'judge': Can only enter balloons (Operations page)
+// ROLES: 'admin' | 'judge' | 'volunteer'
 
-// Get all users with roles from Firestore
+// Get all users with roles
 export const getUsers = async () => {
     const docRef = doc(db, "settings", "users");
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
         const users = docSnap.data().list || [];
-        // Always include super admin
         if (SUPER_ADMIN && !users.find((u) => u.email === SUPER_ADMIN)) {
             users.push({ email: SUPER_ADMIN, role: "admin" });
         }
@@ -50,10 +48,8 @@ export const addUser = async (email, role) => {
     const users = await getUsers();
     const normalizedEmail = email.toLowerCase();
 
-    // Check if already exists
     const existing = users.find((u) => u.email === normalizedEmail);
     if (existing) {
-        // Update role
         existing.role = role;
     } else {
         users.push({ email: normalizedEmail, role });
@@ -61,7 +57,7 @@ export const addUser = async (email, role) => {
     await setDoc(docRef, { list: users });
 };
 
-// Remove user (cannot remove super admin)
+// Remove user
 export const removeUser = async (email) => {
     const normalizedEmail = email.toLowerCase();
     if (normalizedEmail === SUPER_ADMIN) {
@@ -82,7 +78,7 @@ export const getUserRole = async (email) => {
     return user?.role || null;
 };
 
-// Check if email is authorized (any role)
+// Check if authorized (any role)
 export const isAuthorized = async (email) => {
     const role = await getUserRole(email);
     return role !== null;

@@ -1,11 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth, getUserRole, isSuperAdmin, getUsers, addUser, removeUser, isAuthorized } from '../firebase';
-import {
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    signOut,
-    createUserWithEmailAndPassword
-} from 'firebase/auth';
+import { auth, googleProvider, getUserRole, isSuperAdmin, getUsers, addUser, removeUser, isAuthorized } from '../firebase';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 const AuthContext = createContext();
 
@@ -14,7 +9,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [role, setRole] = useState(null); // 'admin' | 'judge' | null
+    const [role, setRole] = useState(null);
     const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
     const [users, setUsers] = useState([]);
 
@@ -24,7 +19,6 @@ export const AuthProvider = ({ children }) => {
             setRole(userRole);
             setIsSuperAdminUser(isSuperAdmin(firebaseUser.email));
 
-            // Load all users for admin
             if (userRole === 'admin') {
                 const allUsers = await getUsers();
                 setUsers(allUsers);
@@ -46,28 +40,26 @@ export const AuthProvider = ({ children }) => {
         return () => unsubscribe();
     }, []);
 
-    const login = async (email, password) => {
+    // Google Sign-In
+    const loginWithGoogle = async () => {
         try {
-            const result = await signInWithEmailAndPassword(auth, email, password);
-            const authorized = await isAuthorized(result.user.email);
-            if (!authorized) {
-                await signOut(auth);
-                throw new Error('This email is not authorized');
-            }
+            const result = await signInWithPopup(auth, googleProvider);
             await loadUserData(result.user);
-            return { success: true };
+            return { success: true, user: result.user };
         } catch (error) {
             return { success: false, error: error.message };
         }
     };
 
-    const register = async (email, password) => {
+    // Login for admin/judge (checks if authorized)
+    const loginAsStaff = async () => {
         try {
-            const authorized = await isAuthorized(email);
+            const result = await signInWithPopup(auth, googleProvider);
+            const authorized = await isAuthorized(result.user.email);
             if (!authorized) {
-                throw new Error('This email is not authorized');
+                await signOut(auth);
+                throw new Error('This email is not authorized. Contact admin to get access.');
             }
-            const result = await createUserWithEmailAndPassword(auth, email, password);
             await loadUserData(result.user);
             return { success: true };
         } catch (error) {
@@ -103,8 +95,8 @@ export const AuthProvider = ({ children }) => {
             isJudge: role === 'judge',
             isSuperAdmin: isSuperAdminUser,
             users,
-            login,
-            register,
+            loginWithGoogle,
+            loginAsStaff,
             logout,
             addUser: addUserWithRole,
             removeUser: removeUserByEmail

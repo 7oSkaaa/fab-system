@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { FaLock, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
+import { FaLock, FaGoogle } from 'react-icons/fa';
 
 // Wrapper for admin-only pages
 export const AdminLogin = ({ children }) => {
@@ -24,24 +24,16 @@ export const JudgeLogin = ({ children }) => {
     return <LoginForm requiredRole="judge" />;
 };
 
-// Login Form Component
+// Login Form Component with Google Sign-In
 const LoginForm = ({ requiredRole }) => {
-    const { login, register } = useAuth();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [isRegister, setIsRegister] = useState(false);
+    const { loginAsStaff } = useAuth();
+    const [error, setError] = React.useState('');
+    const [loading, setLoading] = React.useState(false);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const handleGoogleLogin = async () => {
         setError('');
         setLoading(true);
-
-        const result = isRegister
-            ? await register(email, password)
-            : await login(email, password);
-
+        const result = await loginAsStaff();
         if (!result.success) {
             setError(result.error);
         }
@@ -49,8 +41,8 @@ const LoginForm = ({ requiredRole }) => {
     };
 
     const titles = {
-        admin: { title: 'Admin Access', desc: 'Sign in with your admin email' },
-        judge: { title: 'Staff Access', desc: 'Sign in with your judge/staff email' }
+        admin: { title: 'Admin Access', desc: 'Sign in with your authorized Google account' },
+        judge: { title: 'Staff Access', desc: 'Sign in with your authorized Google account' }
     };
 
     return (
@@ -59,64 +51,35 @@ const LoginForm = ({ requiredRole }) => {
                 <FaLock size={48} style={{ color: 'var(--color-primary)', marginBottom: 'var(--space-lg)' }} />
                 <h2 style={{ marginTop: 0, marginBottom: 'var(--space-sm)' }}>{titles[requiredRole]?.title}</h2>
                 <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-lg)' }}>
-                    {isRegister ? 'Create your account' : titles[requiredRole]?.desc}
+                    {titles[requiredRole]?.desc}
                 </p>
 
-                <form onSubmit={handleSubmit} className="flex flex-col gap-md">
-                    <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="Email"
-                        required
-                        autoFocus
-                    />
-                    <input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Password"
-                        required
-                        minLength={6}
-                    />
+                {error && (
+                    <p style={{
+                        color: 'var(--color-error)',
+                        fontSize: '0.9rem',
+                        padding: 'var(--space-sm)',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        borderRadius: 'var(--radius-sm)',
+                        marginBottom: 'var(--space-md)'
+                    }}>
+                        {error}
+                    </p>
+                )}
 
-                    {error && (
-                        <p style={{
-                            color: 'var(--color-error)',
-                            margin: 0,
-                            fontSize: '0.9rem',
-                            padding: 'var(--space-sm)',
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            borderRadius: 'var(--radius-sm)'
-                        }}>
-                            {error}
-                        </p>
-                    )}
+                <button
+                    onClick={handleGoogleLogin}
+                    className="btn-primary"
+                    disabled={loading}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                >
+                    <FaGoogle />
+                    {loading ? 'Signing in...' : 'Sign in with Google'}
+                </button>
 
-                    <button type="submit" className="btn-primary" disabled={loading}>
-                        {loading ? 'Loading...' : (
-                            <>
-                                {isRegister ? <FaUserPlus /> : <FaSignInAlt />}
-                                {isRegister ? 'Create Account' : 'Sign In'}
-                            </>
-                        )}
-                    </button>
-                </form>
-
-                <div style={{ marginTop: 'var(--space-lg)', borderTop: '1px solid var(--border-color)', paddingTop: 'var(--space-lg)' }}>
-                    <button
-                        onClick={() => { setIsRegister(!isRegister); setError(''); }}
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            color: 'var(--color-primary)',
-                            cursor: 'pointer',
-                            fontSize: '0.9rem'
-                        }}
-                    >
-                        {isRegister ? 'Already have an account? Sign In' : 'First time? Create Account'}
-                    </button>
-                </div>
+                <p style={{ marginTop: 'var(--space-lg)', color: 'var(--text-dim)', fontSize: '0.85rem' }}>
+                    Contact admin if you need access
+                </p>
             </div>
         </div>
     );
