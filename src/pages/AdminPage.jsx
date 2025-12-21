@@ -11,8 +11,10 @@ export const AdminPage = () => {
     const { resetData, sites, teams, problems, balloons } = useBalloonContext();
     const { changePassword, logout } = useAuth();
     const [activeTab, setActiveTab] = useState('sites');
+    const [masterPassword, setMasterPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [passwordMsg, setPasswordMsg] = useState('');
+    const [passwordError, setPasswordError] = useState(false);
 
     const handleReset = () => {
         if (window.confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
@@ -21,14 +23,29 @@ export const AdminPage = () => {
     };
 
     const handleChangePassword = async () => {
-        if (newPassword.length < 4) {
-            setPasswordMsg('Password must be at least 4 characters');
+        setPasswordMsg('');
+        setPasswordError(false);
+
+        if (!masterPassword) {
+            setPasswordMsg('Master password is required');
+            setPasswordError(true);
             return;
         }
-        await changePassword(newPassword);
-        setNewPassword('');
-        setPasswordMsg('Password changed successfully!');
-        setTimeout(() => setPasswordMsg(''), 3000);
+        if (newPassword.length < 4) {
+            setPasswordMsg('New password must be at least 4 characters');
+            setPasswordError(true);
+            return;
+        }
+
+        try {
+            await changePassword(masterPassword, newPassword);
+            setNewPassword('');
+            setMasterPassword('');
+            setPasswordMsg('Password changed! All sessions will be logged out.');
+        } catch (err) {
+            setPasswordMsg(err.message);
+            setPasswordError(true);
+        }
     };
 
     const tabs = [
@@ -148,22 +165,36 @@ export const AdminPage = () => {
                             <label style={{ display: 'block', marginBottom: 'var(--space-sm)', fontWeight: '600' }}>
                                 Change Admin Password
                             </label>
-                            <div className="flex gap-sm">
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 'var(--space-md)' }}>
+                                Only the holder of the master password can change the admin password.
+                                Changing the password will log out ALL devices.
+                            </p>
+
+                            <div className="flex flex-col gap-sm" style={{ marginBottom: 'var(--space-sm)' }}>
+                                <input
+                                    type="password"
+                                    value={masterPassword}
+                                    onChange={(e) => setMasterPassword(e.target.value)}
+                                    placeholder="Master password (required)"
+                                />
                                 <input
                                     type="password"
                                     value={newPassword}
                                     onChange={(e) => setNewPassword(e.target.value)}
-                                    placeholder="New password"
-                                    style={{ flex: 1 }}
+                                    placeholder="New admin password"
                                 />
                                 <button onClick={handleChangePassword} className="btn-primary">
-                                    Update
+                                    Update Password
                                 </button>
                             </div>
+
                             {passwordMsg && (
                                 <p style={{
                                     marginTop: 'var(--space-sm)',
-                                    color: passwordMsg.includes('success') ? 'var(--color-success)' : 'var(--color-error)',
+                                    padding: 'var(--space-sm) var(--space-md)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    background: passwordError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                                    color: passwordError ? 'var(--color-error)' : 'var(--color-success)',
                                     fontSize: '0.9rem'
                                 }}>
                                     {passwordMsg}
