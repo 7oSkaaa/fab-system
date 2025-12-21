@@ -1,66 +1,58 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getAdminSettings, setAdminPassword, MASTER_PASSWORD } from '../firebase';
+import { auth, isAdminEmail } from '../firebase';
+import {
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    signOut,
+    createUserWithEmailAndPassword
+} from 'firebase/auth';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-    const [isAdmin, setIsAdmin] = useState(false);
+    const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [adminPassword, setAdminPasswordState] = useState('');
-    const [passwordVersion, setPasswordVersion] = useState(0);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
-        // Load settings from Firestore
-        const loadSettings = async () => {
-            const settings = await getAdminSettings();
-            setAdminPasswordState(settings.password);
-            setPasswordVersion(settings.passwordVersion || 1);
-
-            // Check if admin session exists AND version matches
-            const savedVersion = sessionStorage.getItem('fab_admin_version');
-            const adminSession = sessionStorage.getItem('fab_admin');
-
-            if (adminSession === 'true' && savedVersion === String(settings.passwordVersion || 1)) {
-                setIsAdmin(true);
-            } else {
-                // Session is invalid (password was changed)
-                sessionStorage.removeItem('fab_admin');
-                sessionStorage.removeItem('fab_admin_version');
-            }
-
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setUser(user);
+            setIsAdmin(user ? isAdminEmail(user.email) : false);
             setLoading(false);
-        };
-        loadSettings();
+        });
+
+        return () => unsubscribe();
     }, []);
 
-    const login = (password) => {
-        if (password === adminPassword) {
-            setIsAdmin(true);
-            sessionStorage.setItem('fab_admin', 'true');
-            sessionStorage.setItem('fab_admin_version', String(passwordVersion));
-            return true;
+    const login = async (email, password) => {
+        try {
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            if (!isAdminEmail(result.user.email)) {
+                await signOut(auth);
+                throw new Error('This email is not authorized as admin');
+            }
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
         }
-        return false;
     };
 
-    const logout = () => {
-        setIsAdmin(false);
-        sessionStorage.removeItem('fab_admin');
-        sessionStorage.removeItem('fab_admin_version');
+    const register = async (email, password) => {
+        try {
+            if (!isAdminEmail(email)) {
+                throw new Error('This email is not authorized as admin');
+            }
+            await createUserWithEmailAndPassword(auth, email, password);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
+        }
     };
 
-    // Change password - requires master password
-    const changePassword = async (masterPwd, newPassword) => {
-        if (masterPwd !== MASTER_PASSWORD) {
-            throw new Error('Invalid master password');
-        }
-        await setAdminPassword(newPassword);
-        setAdminPasswordState(newPassword);
-        setPasswordVersion(prev => prev + 1);
-        // Logout current user too
-        logout();
+    const logout = async () => {
+        await signOut(auth);
     };
 
     if (loading) {
@@ -68,7 +60,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     return (
-        <AuthContext.Provider value={{ isAdmin, login, logout, changePassword }}>
+        <AuthContext.Provider value={{ user, isAdmin, login, register, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

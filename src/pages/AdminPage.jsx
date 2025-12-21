@@ -5,54 +5,28 @@ import { useAuth } from '../contexts/AuthContext';
 import { SiteManager } from '../components/admin/SiteManager';
 import { TeamManager } from '../components/admin/TeamManager';
 import { ProblemManager } from '../components/admin/ProblemManager';
-import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaKey } from 'react-icons/fa';
+import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser } from 'react-icons/fa';
 
 export const AdminPage = () => {
     const { resetData, sites, teams, problems, balloons } = useBalloonContext();
-    const { changePassword, logout } = useAuth();
+    const { logout, user } = useAuth();
     const [activeTab, setActiveTab] = useState('sites');
-    const [masterPassword, setMasterPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [passwordMsg, setPasswordMsg] = useState('');
-    const [passwordError, setPasswordError] = useState(false);
 
-    const handleReset = () => {
+    const handleReset = async () => {
         if (window.confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
-            resetData();
+            await resetData();
         }
     };
 
-    const handleChangePassword = async () => {
-        setPasswordMsg('');
-        setPasswordError(false);
-
-        if (!masterPassword) {
-            setPasswordMsg('Master password is required');
-            setPasswordError(true);
-            return;
-        }
-        if (newPassword.length < 4) {
-            setPasswordMsg('New password must be at least 4 characters');
-            setPasswordError(true);
-            return;
-        }
-
-        try {
-            await changePassword(masterPassword, newPassword);
-            setNewPassword('');
-            setMasterPassword('');
-            setPasswordMsg('Password changed! All sessions will be logged out.');
-        } catch (err) {
-            setPasswordMsg(err.message);
-            setPasswordError(true);
-        }
+    const handleLogout = async () => {
+        await logout();
     };
 
     const tabs = [
         { id: 'sites', label: 'Sites', icon: <FaMapMarkerAlt />, count: sites.length },
         { id: 'problems', label: 'Problems', icon: <FaPalette />, count: problems.length },
         { id: 'teams', label: 'Teams', icon: <FaUsers />, count: teams.length },
-        { id: 'settings', label: 'Settings', icon: <FaKey /> },
+        { id: 'account', label: 'Account', icon: <FaUser /> },
         { id: 'danger', label: 'Reset', icon: <FaTrash />, danger: true },
     ];
 
@@ -154,60 +128,20 @@ export const AdminPage = () => {
                 {activeTab === 'sites' && <SiteManager />}
                 {activeTab === 'problems' && <ProblemManager />}
                 {activeTab === 'teams' && <TeamManager />}
-                {activeTab === 'settings' && (
+                {activeTab === 'account' && (
                     <div className="card" style={{ maxWidth: '500px' }}>
                         <h3 style={{ marginTop: 0, marginBottom: 'var(--space-lg)' }}>
-                            🔐 Admin Settings
+                            👤 Account
                         </h3>
 
-                        {/* Change Password */}
                         <div style={{ marginBottom: 'var(--space-lg)' }}>
-                            <label style={{ display: 'block', marginBottom: 'var(--space-sm)', fontWeight: '600' }}>
-                                Change Admin Password
-                            </label>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 'var(--space-md)' }}>
-                                Only the holder of the master password can change the admin password.
-                                Changing the password will log out ALL devices.
-                            </p>
-
-                            <div className="flex flex-col gap-sm" style={{ marginBottom: 'var(--space-sm)' }}>
-                                <input
-                                    type="password"
-                                    value={masterPassword}
-                                    onChange={(e) => setMasterPassword(e.target.value)}
-                                    placeholder="Master password (required)"
-                                />
-                                <input
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    placeholder="New admin password"
-                                />
-                                <button onClick={handleChangePassword} className="btn-primary">
-                                    Update Password
-                                </button>
-                            </div>
-
-                            {passwordMsg && (
-                                <p style={{
-                                    marginTop: 'var(--space-sm)',
-                                    padding: 'var(--space-sm) var(--space-md)',
-                                    borderRadius: 'var(--radius-sm)',
-                                    background: passwordError ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                                    color: passwordError ? 'var(--color-error)' : 'var(--color-success)',
-                                    fontSize: '0.9rem'
-                                }}>
-                                    {passwordMsg}
-                                </p>
-                            )}
+                            <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Signed in as:</label>
+                            <p style={{ fontWeight: '600', margin: 'var(--space-xs) 0 0 0' }}>{user?.email}</p>
                         </div>
 
-                        {/* Logout */}
-                        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 'var(--space-lg)' }}>
-                            <button onClick={logout} className="btn-secondary" style={{ width: '100%' }}>
-                                🚪 Logout
-                            </button>
-                        </div>
+                        <button onClick={handleLogout} className="btn-danger" style={{ width: '100%' }}>
+                            <FaSignOutAlt /> Sign Out
+                        </button>
                     </div>
                 )}
                 {activeTab === 'danger' && (

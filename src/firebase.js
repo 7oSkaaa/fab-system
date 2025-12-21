@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
 // Firebase config from environment variables
 const firebaseConfig = {
@@ -13,34 +14,15 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
+export const auth = getAuth(app);
 
-// Master password from environment variable
-export const MASTER_PASSWORD =
-    import.meta.env.VITE_MASTER_PASSWORD || "changeme";
+// Admin email whitelist - only these emails can access admin features
+// Add your email here!
+export const ADMIN_EMAILS = [
+    import.meta.env.VITE_ADMIN_EMAIL || "admin@example.com",
+];
 
-// Get admin settings from Firestore
-export const getAdminSettings = async () => {
-    const docRef = doc(db, "settings", "admin");
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        return docSnap.data();
-    } else {
-        const defaults = {
-            password: "fab2024",
-            passwordVersion: 1,
-        };
-        await setDoc(docRef, defaults);
-        return defaults;
-    }
-};
-
-// Update admin password
-export const setAdminPassword = async (newPassword) => {
-    const docRef = doc(db, "settings", "admin");
-    const current = await getAdminSettings();
-    await setDoc(docRef, {
-        password: newPassword,
-        passwordVersion: (current.passwordVersion || 0) + 1,
-    });
+// Check if user is an admin
+export const isAdminEmail = (email) => {
+    return ADMIN_EMAILS.includes(email?.toLowerCase());
 };
