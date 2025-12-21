@@ -1,23 +1,22 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
+// Firebase config from environment variables
 const firebaseConfig = {
-    apiKey: "AIzaSyB6KDYd__t2hfucT39xLRgWv8vX1wQtzLk",
-    authDomain: "fab-system.firebaseapp.com",
-    projectId: "fab-system",
-    storageBucket: "fab-system.firebasestorage.app",
-    messagingSenderId: "226577678672",
-    appId: "1:226577678672:web:cafa6c64a880931475ac55",
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
-// ============================================
-// MASTER PASSWORD - SET THIS ONCE AND KEEP IT SECRET
-// This is the ONLY password that can change the admin password
-// ============================================
-export const MASTER_PASSWORD = "MySecretMaster2024"; // <-- CHANGE THIS TO YOUR SECRET
+// Master password from environment variable
+export const MASTER_PASSWORD =
+    import.meta.env.VITE_MASTER_PASSWORD || "changeme";
 
 // Get admin settings from Firestore
 export const getAdminSettings = async () => {
@@ -27,22 +26,21 @@ export const getAdminSettings = async () => {
     if (docSnap.exists()) {
         return docSnap.data();
     } else {
-        // Create default settings on first run
         const defaults = {
             password: "fab2024",
-            passwordVersion: 1, // Increment this to invalidate all sessions
+            passwordVersion: 1,
         };
         await setDoc(docRef, defaults);
         return defaults;
     }
 };
 
-// Update admin password (only callable with master password verification)
+// Update admin password
 export const setAdminPassword = async (newPassword) => {
     const docRef = doc(db, "settings", "admin");
     const current = await getAdminSettings();
     await setDoc(docRef, {
         password: newPassword,
-        passwordVersion: (current.passwordVersion || 0) + 1, // Increment to invalidate all sessions
+        passwordVersion: (current.passwordVersion || 0) + 1,
     });
 };
