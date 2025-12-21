@@ -20,13 +20,19 @@ export const ProblemManager = () => {
     const [name, setName] = useState('');
     const [selectedColor, setSelectedColor] = useState(BALLOON_COLORS[0].value);
     const [selectedSiteId, setSelectedSiteId] = useState('global'); // 'global' or site ID
+    const [error, setError] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
         if (name.trim()) {
-            const siteId = selectedSiteId === 'global' ? null : selectedSiteId;
-            addProblem(name, selectedColor, siteId);
-            setName('');
+            try {
+                const siteId = selectedSiteId === 'global' ? null : selectedSiteId;
+                await addProblem(name, selectedColor, siteId);
+                setName('');
+            } catch (err) {
+                setError(err.message);
+            }
         }
     };
 
@@ -97,6 +103,20 @@ export const ProblemManager = () => {
                         <FaPlus /> Add
                     </button>
                 </div>
+
+                {error && (
+                    <div style={{
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '2px solid var(--color-error)',
+                        borderRadius: 'var(--radius-md)',
+                        padding: 'var(--space-sm) var(--space-md)',
+                        color: 'var(--color-error)',
+                        fontSize: '0.9rem',
+                        marginBottom: 'var(--space-sm)'
+                    }}>
+                        ⚠️ {error}
+                    </div>
+                )}
 
                 {/* Custom HEX Input */}
                 <div className="flex items-center gap-sm">

@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import { BalloonProvider } from './contexts/BalloonContext';
+import { BalloonProvider, useBalloonContext } from './contexts/BalloonContext';
+import { AuthProvider } from './contexts/AuthContext';
+import { AdminLogin } from './components/AdminLogin';
 import { AdminPage } from './pages/AdminPage';
 import { OperationsPage } from './pages/OperationsPage';
 import { VolunteerPage } from './pages/VolunteerPage';
@@ -27,10 +29,10 @@ const HomePage = () => (
 
       <div className="flex flex-col gap-sm">
         <Link to="/admin" className="btn-menu">
-          ⚙️ <span>Admin Configuration</span>
+          🔒 <span>Admin Configuration</span>
         </Link>
         <Link to="/ops" className="btn-menu">
-          👨‍⚖️ <span>Judge / Staff Entry</span>
+          🔒 <span>Judge / Staff Entry</span>
         </Link>
         <Link to="/volunteer" className="btn-menu">
           🚀 <span>Volunteer Dashboard</span>
@@ -43,19 +45,52 @@ const HomePage = () => (
   </div>
 );
 
+// Loading component
+const LoadingScreen = () => (
+  <div className="container flex flex-col items-center justify-center" style={{ minHeight: '100vh' }}>
+    <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+      <h2 className="text-gradient">Loading...</h2>
+      <p style={{ color: 'var(--text-muted)' }}>Connecting to database</p>
+    </div>
+  </div>
+);
+
+// App wrapper that checks loading state
+const AppContent = () => {
+  const { loading } = useBalloonContext();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/admin" element={
+        <AdminLogin>
+          <AdminPage />
+        </AdminLogin>
+      } />
+      <Route path="/ops" element={
+        <AdminLogin>
+          <OperationsPage />
+        </AdminLogin>
+      } />
+      <Route path="/volunteer" element={<VolunteerPage />} />
+      <Route path="/public" element={<PublicPage />} />
+    </Routes>
+  );
+};
+
 function App() {
   return (
-    <BalloonProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/ops" element={<OperationsPage />} />
-          <Route path="/volunteer" element={<VolunteerPage />} />
-          <Route path="/public" element={<PublicPage />} />
-        </Routes>
-      </BrowserRouter>
-    </BalloonProvider>
+    <AuthProvider>
+      <BalloonProvider>
+        <BrowserRouter>
+          <AppContent />
+        </BrowserRouter>
+      </BalloonProvider>
+    </AuthProvider>
   );
 }
 
