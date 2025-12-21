@@ -5,7 +5,112 @@ import { useAuth } from '../contexts/AuthContext';
 import { SiteManager } from '../components/admin/SiteManager';
 import { TeamManager } from '../components/admin/TeamManager';
 import { ProblemManager } from '../components/admin/ProblemManager';
-import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser, FaPlus, FaTimes, FaCrown } from 'react-icons/fa';
+
+// Account Tab Component
+const AccountTab = ({ user, handleLogout }) => {
+    const { isSuperAdmin, adminEmails, addAdmin, removeAdmin } = useAuth();
+    const [newEmail, setNewEmail] = useState('');
+    const [error, setError] = useState('');
+
+    const handleAddAdmin = async () => {
+        if (!newEmail || !newEmail.includes('@')) {
+            setError('Please enter a valid email');
+            return;
+        }
+        try {
+            await addAdmin(newEmail);
+            setNewEmail('');
+            setError('');
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const handleRemoveAdmin = async (email) => {
+        if (window.confirm(`Remove ${email} from admins?`)) {
+            try {
+                await removeAdmin(email);
+            } catch (err) {
+                setError(err.message);
+            }
+        }
+    };
+
+    return (
+        <div className="card" style={{ maxWidth: '600px' }}>
+            <h3 style={{ marginTop: 0, marginBottom: 'var(--space-lg)' }}>👤 Account</h3>
+
+            {/* Current User */}
+            <div style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-md)', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)' }}>
+                <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Signed in as:</label>
+                <p style={{ fontWeight: '600', margin: 'var(--space-xs) 0 0 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {user?.email}
+                    {isSuperAdmin && <FaCrown style={{ color: 'var(--color-accent)' }} title="Super Admin" />}
+                </p>
+            </div>
+
+            {/* Admin Management - Only for Super Admin */}
+            {isSuperAdmin && (
+                <div style={{ marginBottom: 'var(--space-lg)' }}>
+                    <h4 style={{ marginTop: 0, marginBottom: 'var(--space-md)' }}>👥 Admin Emails</h4>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 'var(--space-md)' }}>
+                        These emails can access Admin and Judge/Staff pages.
+                    </p>
+
+                    {/* Add New Admin */}
+                    <div className="flex gap-sm" style={{ marginBottom: 'var(--space-md)' }}>
+                        <input
+                            type="email"
+                            value={newEmail}
+                            onChange={(e) => setNewEmail(e.target.value)}
+                            placeholder="new-admin@email.com"
+                            style={{ flex: 1 }}
+                        />
+                        <button onClick={handleAddAdmin} className="btn-primary">
+                            <FaPlus /> Add
+                        </button>
+                    </div>
+
+                    {error && (
+                        <p style={{ color: 'var(--color-error)', fontSize: '0.9rem', marginBottom: 'var(--space-sm)' }}>{error}</p>
+                    )}
+
+                    {/* Admin List */}
+                    <div className="flex flex-col gap-sm">
+                        {adminEmails.map(email => (
+                            <div key={email} className="flex justify-between items-center" style={{
+                                padding: 'var(--space-sm) var(--space-md)',
+                                background: 'var(--bg-elevated)',
+                                borderRadius: 'var(--radius-sm)',
+                                border: '1px solid var(--border-color)'
+                            }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    {email}
+                                    {email === user?.email?.toLowerCase() && (
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)' }}>(you)</span>
+                                    )}
+                                </span>
+                                {email !== user?.email?.toLowerCase() && (
+                                    <button
+                                        onClick={() => handleRemoveAdmin(email)}
+                                        style={{ background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', padding: '4px' }}
+                                    >
+                                        <FaTimes />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            <button onClick={handleLogout} className="btn-danger" style={{ width: '100%' }}>
+                <FaSignOutAlt /> Sign Out
+            </button>
+        </div>
+    );
+};
 
 export const AdminPage = () => {
     const { resetData, sites, teams, problems, balloons } = useBalloonContext();
@@ -128,22 +233,7 @@ export const AdminPage = () => {
                 {activeTab === 'sites' && <SiteManager />}
                 {activeTab === 'problems' && <ProblemManager />}
                 {activeTab === 'teams' && <TeamManager />}
-                {activeTab === 'account' && (
-                    <div className="card" style={{ maxWidth: '500px' }}>
-                        <h3 style={{ marginTop: 0, marginBottom: 'var(--space-lg)' }}>
-                            👤 Account
-                        </h3>
-
-                        <div style={{ marginBottom: 'var(--space-lg)' }}>
-                            <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Signed in as:</label>
-                            <p style={{ fontWeight: '600', margin: 'var(--space-xs) 0 0 0' }}>{user?.email}</p>
-                        </div>
-
-                        <button onClick={handleLogout} className="btn-danger" style={{ width: '100%' }}>
-                            <FaSignOutAlt /> Sign Out
-                        </button>
-                    </div>
-                )}
+                {activeTab === 'account' && <AccountTab user={user} handleLogout={handleLogout} />}
                 {activeTab === 'danger' && (
                     <div className="card" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', maxWidth: '500px' }}>
                         <h3 style={{ color: 'var(--color-error)', marginTop: 0, marginBottom: 'var(--space-md)' }}>
