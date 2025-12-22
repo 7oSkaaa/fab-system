@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
-import { FaBoxOpen, FaClock, FaMapMarkerAlt, FaCheck, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser } from 'react-icons/fa';
+import { FaBoxOpen, FaClock, FaMapMarkerAlt, FaCheck, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync } from 'react-icons/fa';
 
 export const VolunteerPage = () => {
     const { balloons, teams, sites, problems, markDelivered } = useBalloonContext();
     const { user, loginWithGoogle, logout } = useAuth();
     const [selectedSiteId, setSelectedSiteId] = useState('all');
     const [loggingIn, setLoggingIn] = useState(false);
+    const [countdown, setCountdown] = useState(15);
+    const [lastRefresh, setLastRefresh] = useState(Date.now());
+
+    // Auto-refresh every 15 seconds
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    setLastRefresh(Date.now()); // Trigger re-render
+                    return 15;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, []);
 
     const getProblem = (id) => problems.find(p => p.id === id);
     const getTeam = (id) => teams.find(t => t.id === id);
@@ -35,12 +52,31 @@ export const VolunteerPage = () => {
         setLoggingIn(false);
     };
 
+    const handleManualRefresh = () => {
+        setLastRefresh(Date.now());
+        setCountdown(15);
+    };
+
     return (
         <div className="container" style={{ paddingTop: 'var(--space-lg)', paddingBottom: 'var(--space-xl)' }}>
             <header className="page-header flex justify-between items-center flex-wrap gap-md">
                 <div className="page-title">
                     <h1 className="page-title-main">🚀 Balloon Delivery</h1>
-                    <p className="page-title-sub">{pendingBalloons.length} Pending</p>
+                    <p className="page-title-sub" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {pendingBalloons.length} Pending
+                        <span style={{
+                            fontSize: '0.75rem',
+                            padding: '2px 8px',
+                            borderRadius: 'var(--radius-full)',
+                            background: 'var(--bg-elevated)',
+                            color: 'var(--text-dim)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}>
+                            <FaSync style={{ fontSize: '0.6rem' }} /> {countdown}s
+                        </span>
+                    </p>
                 </div>
                 <Link to="/" className="btn-secondary">
                     <FaHome /> Home

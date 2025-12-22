@@ -27,34 +27,48 @@ export const BalloonProvider = ({ children }) => {
     // --- Realtime Listeners ---
     useEffect(() => {
         const unsubscribers = [];
+        let resolved = false;
+
+        const finish = () => {
+            if (!resolved) {
+                resolved = true;
+                setLoading(false);
+            }
+        };
 
         // Sites
         unsubscribers.push(
-            onSnapshot(collection(db, 'sites'), (snapshot) => {
-                setSites(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-            })
+            onSnapshot(collection(db, 'sites'),
+                (snapshot) => setSites(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
+                () => {}
+            )
         );
 
         // Teams
         unsubscribers.push(
-            onSnapshot(collection(db, 'teams'), (snapshot) => {
-                setTeams(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-            })
+            onSnapshot(collection(db, 'teams'),
+                (snapshot) => setTeams(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
+                () => {}
+            )
         );
 
         // Problems
         unsubscribers.push(
-            onSnapshot(collection(db, 'problems'), (snapshot) => {
-                setProblems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-            })
+            onSnapshot(collection(db, 'problems'),
+                (snapshot) => setProblems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
+                () => {}
+            )
         );
 
         // Balloons
         unsubscribers.push(
-            onSnapshot(collection(db, 'balloons'), (snapshot) => {
-                setBalloons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                setLoading(false);
-            })
+            onSnapshot(collection(db, 'balloons'),
+                (snapshot) => {
+                    setBalloons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                    finish();
+                },
+                () => finish()
+            )
         );
 
         return () => unsubscribers.forEach(unsub => unsub());
