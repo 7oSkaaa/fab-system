@@ -8,8 +8,7 @@ import {
     deleteDoc,
     updateDoc,
     writeBatch,
-    query,
-    orderBy
+    getDocs,
 } from 'firebase/firestore';
 
 const BalloonContext = createContext();
@@ -39,7 +38,11 @@ export const BalloonProvider = ({ children }) => {
         // Sites
         unsubscribers.push(
             onSnapshot(collection(db, 'sites'),
-                (snapshot) => setSites(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))),
+                (snapshot) => {
+                    const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+                    setSites(list);
+                },
                 () => {}
             )
         );
@@ -83,6 +86,14 @@ export const BalloonProvider = ({ children }) => {
 
     const removeSite = async (id) => {
         await deleteDoc(doc(db, 'sites', id));
+    };
+
+    const reorderSites = async (orderedIds) => {
+        const batch = writeBatch(db);
+        orderedIds.forEach((id, index) => {
+            batch.update(doc(db, 'sites', id), { order: index });
+        });
+        await batch.commit();
     };
 
     // Teams
@@ -149,14 +160,15 @@ export const BalloonProvider = ({ children }) => {
             problemId,
             teamId,
             siteId,
-            status: 'pending',
+            delivered: false,
+            published: false,
             timestamp: Date.now()
         });
     };
 
     const markDelivered = async (balloonId, deliveredByEmail) => {
         await updateDoc(doc(db, 'balloons', balloonId), {
-            status: 'delivered',
+            delivered: true,
             deliveredBy: deliveredByEmail || 'anonymous',
             deliveredAt: Date.now()
         });
@@ -164,30 +176,50 @@ export const BalloonProvider = ({ children }) => {
 
     const markPublished = async (balloonId, publishedByEmail) => {
         await updateDoc(doc(db, 'balloons', balloonId), {
-            status: 'published',
+            published: true,
             publishedBy: publishedByEmail || 'anonymous',
             publishedAt: Date.now()
         });
     };
 
+    const resetBalloons = async () => {
+        const snapshot = await getDocs(collection(db, 'balloons'));
+        const batch = writeBatch(db);
+        snapshot.docs.forEach(d => batch.delete(d.ref));
+        await batch.commit();
+    };
+
+    const revertBalloon = async (balloonId) => {
+        await updateDoc(doc(db, 'balloons', balloonId), {
+            delivered: false,
+            published: false,
+            deliveredBy: null,
+            deliveredAt: null,
+            publishedBy: null,
+            publishedAt: null,
+        });
+    };
+
+    const deleteBalloon = async (balloonId) => {
+        await deleteDoc(doc(db, 'balloons', balloonId));
+    };
+
     const resetData = async () => {
-        // Delete all documents in all collections
-        const collections = ['sites', 'teams', 'problems', 'balloons'];
-        for (const collName of collections) {
+        const names = ['sites', 'teams', 'problems', 'balloons'];
+        for (const name of names) {
+            const snapshot = await getDocs(collection(db, name));
             const batch = writeBatch(db);
-            const snapshot = await collection(db, collName);
-            // Note: This is a simplified version. For large datasets, you'd need pagination.
+            snapshot.docs.forEach(d => batch.delete(d.ref));
+            await batch.commit();
         }
-        // For now, just clear locally - user can manually delete in Firebase console
-        alert('To fully reset, please delete collections in Firebase Console.');
     };
 
     return (
         <BalloonContext.Provider value={{
-            sites, addSite, removeSite,
+            sites, addSite, removeSite, reorderSites,
             teams, addTeam, addTeams, removeTeam, updateTeamDisplayName,
             problems, addProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
-            balloons, addBalloon, markDelivered, markPublished,
+            balloons, addBalloon, markDelivered, markPublished, revertBalloon, deleteBalloon, resetBalloons,
             resetData,
             loading
         }}>

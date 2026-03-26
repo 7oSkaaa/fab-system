@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { SiteManager } from '../components/admin/SiteManager';
 import { TeamManager } from '../components/admin/TeamManager';
 import { ProblemManager } from '../components/admin/ProblemManager';
-import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser, FaPlus, FaTimes, FaCrown, FaUserShield, FaGavel } from 'react-icons/fa';
+import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser, FaPlus, FaTimes, FaCrown, FaUserShield, FaGavel, FaListAlt, FaUndo, FaClock, FaCheck, FaBullhorn } from 'react-icons/fa';
 
 // Account Tab Component with Role Management
 const AccountTab = ({ user, handleLogout }) => {
@@ -139,14 +139,150 @@ const AccountTab = ({ user, handleLogout }) => {
     );
 };
 
+const getBalloonBadges = (b) => {
+    if (!b.delivered && !b.published) return [{ label: 'pending', icon: <FaClock />, color: 'var(--color-warning)' }];
+    const badges = [];
+    if (b.delivered) badges.push({ label: 'delivered', icon: <FaCheck />, color: 'var(--color-success)' });
+    if (b.published) badges.push({ label: 'published', icon: <FaBullhorn />, color: 'var(--color-primary)' });
+    return badges;
+};
+
+const BalloonsManager = ({ balloons, teams, problems, sites, revertBalloon, deleteBalloon }) => {
+    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+    const [revertedIds, setRevertedIds] = useState(new Set());
+
+    const getTeam = (id) => teams.find(t => t.id === id);
+    const getProblem = (id) => problems.find(p => p.id === id);
+    const getSite = (id) => sites.find(s => s.id === id);
+
+    const handleRevert = async (id) => {
+        await revertBalloon(id);
+        setRevertedIds(prev => new Set(prev).add(id));
+        setTimeout(() => setRevertedIds(prev => { const next = new Set(prev); next.delete(id); return next; }), 2500);
+    };
+
+    const handleDelete = async (id) => {
+        await deleteBalloon(id);
+        setConfirmDeleteId(null);
+    };
+
+    const sorted = [...balloons].sort((a, b) => b.timestamp - a.timestamp);
+
+    if (sorted.length === 0) {
+        return (
+            <div className="card" style={{ textAlign: 'center', padding: 'var(--space-xl)' }}>
+                <p style={{ color: 'var(--text-muted)' }}>No balloons logged yet.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col gap-sm">
+            {sorted.map(b => {
+                const team = getTeam(b.teamId);
+                const problem = getProblem(b.problemId);
+                const site = getSite(b.siteId);
+                const color = problem?.color || '#888';
+                const timeAgo = Math.floor((Date.now() - b.timestamp) / 60000);
+                const justReverted = revertedIds.has(b.id);
+                const confirmingDelete = confirmDeleteId === b.id;
+
+                return (
+                    <div key={b.id} className="card" style={{ borderLeft: `4px solid ${color}`, padding: 'var(--space-md)' }}>
+                        <div className="flex justify-between items-center flex-wrap gap-sm">
+                            <div className="flex flex-col gap-xs">
+                                <div className="flex items-center gap-sm" style={{ flexWrap: 'wrap' }}>
+                                    <span style={{ fontWeight: '700', fontSize: '1rem' }}>
+                                        {team ? (team.displayName || team.name) : 'Unknown Team'}
+                                    </span>
+                                    {getBalloonBadges(b).map(badge => (
+                                        <span key={badge.label} style={{
+                                            fontSize: '0.75rem', padding: '2px 8px',
+                                            borderRadius: 'var(--radius-full)',
+                                            background: badge.color + '22',
+                                            color: badge.color,
+                                            display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '600'
+                                        }}>
+                                            {badge.icon} {badge.label}
+                                        </span>
+                                    ))}
+                                    {justReverted && (
+                                        <span style={{ fontSize: '0.75rem', color: 'var(--color-success)', fontWeight: '600' }}>
+                                            ✓ Reverted
+                                        </span>
+                                    )}
+                                </div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                    <span style={{ color }}>Problem {problem?.name || '?'}</span>
+                                    <span>{site?.name || 'Unknown site'}</span>
+                                    <span>{timeAgo}m ago</span>
+                                </div>
+                            </div>
+                            <div className="flex gap-sm items-center">
+                                {(b.delivered || b.published) && (
+                                    <button
+                                        onClick={() => handleRevert(b.id)}
+                                        className="btn-secondary"
+                                        style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                                    >
+                                        <FaUndo /> Revert
+                                    </button>
+                                )}
+                                {confirmingDelete ? (
+                                    <div className="flex gap-sm items-center">
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--color-error)' }}>Delete?</span>
+                                        <button
+                                            onClick={() => handleDelete(b.id)}
+                                            style={{ background: 'var(--color-error)', border: 'none', color: 'white', borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
+                                        >
+                                            Yes
+                                        </button>
+                                        <button
+                                            onClick={() => setConfirmDeleteId(null)}
+                                            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', color: 'var(--text-main)', borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem' }}
+                                        >
+                                            No
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => setConfirmDeleteId(b.id)}
+                                        style={{ background: 'none', border: '2px solid var(--color-error)', color: 'var(--color-error)', borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                    >
+                                        <FaTrash size={12} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
 export const AdminPage = () => {
-    const { resetData, sites, teams, problems, balloons } = useBalloonContext();
+    const { resetData, resetBalloons, revertBalloon, deleteBalloon, sites, teams, problems, balloons } = useBalloonContext();
     const { logout, user } = useAuth();
     const [activeTab, setActiveTab] = useState('sites');
 
+    const [confirmReset, setConfirmReset] = useState(null); // 'balloons' | 'all'
+
     const handleReset = async () => {
-        if (window.confirm('Are you sure you want to delete ALL data? This cannot be undone.')) {
+        if (confirmReset === 'all') {
             await resetData();
+            setConfirmReset(null);
+        } else {
+            setConfirmReset('all');
+        }
+    };
+
+    const handleResetBalloons = async () => {
+        if (confirmReset === 'balloons') {
+            await resetBalloons();
+            setConfirmReset(null);
+        } else {
+            setConfirmReset('balloons');
         }
     };
 
@@ -158,6 +294,7 @@ export const AdminPage = () => {
         { id: 'sites', label: 'Sites', icon: <FaMapMarkerAlt />, count: sites.length },
         { id: 'problems', label: 'Problems', icon: <FaPalette />, count: problems.length },
         { id: 'teams', label: 'Teams', icon: <FaUsers />, count: teams.length },
+        { id: 'balloons', label: 'Balloons', icon: <FaListAlt />, count: balloons.length },
         { id: 'account', label: 'Account', icon: <FaUser /> },
         { id: 'danger', label: 'Reset', icon: <FaTrash />, danger: true },
     ];
@@ -261,18 +398,62 @@ export const AdminPage = () => {
                 {activeTab === 'problems' && <ProblemManager />}
                 {activeTab === 'teams' && <TeamManager />}
                 {activeTab === 'account' && <AccountTab user={user} handleLogout={handleLogout} />}
+                {activeTab === 'balloons' && (
+                    <BalloonsManager
+                        balloons={balloons}
+                        teams={teams}
+                        problems={problems}
+                        sites={sites}
+                        revertBalloon={revertBalloon}
+                        deleteBalloon={deleteBalloon}
+                    />
+                )}
                 {activeTab === 'danger' && (
-                    <div className="card" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', maxWidth: '500px' }}>
-                        <h3 style={{ color: 'var(--color-error)', marginTop: 0, marginBottom: 'var(--space-md)' }}>
-                            ⚠️ Reset All Data
-                        </h3>
-                        <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-lg)', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                            This will <strong>permanently delete</strong> all sites, teams, problems, and balloon records.
-                            This action cannot be undone.
-                        </p>
-                        <button onClick={handleReset} className="btn-danger" style={{ width: '100%' }}>
-                            <FaTrash /> DELETE EVERYTHING
-                        </button>
+                    <div className="flex flex-col gap-md" style={{ maxWidth: '500px' }}>
+                        <div className="card" style={{ borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+                            <h3 style={{ color: 'var(--color-error)', marginTop: 0, marginBottom: 'var(--space-sm)' }}>
+                                🎈 Reset Balloons Only
+                            </h3>
+                            <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-md)', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                                Deletes all balloon records but keeps sites, teams, and problems intact.
+                            </p>
+                            {confirmReset === 'balloons' ? (
+                                <div className="flex gap-sm">
+                                    <button onClick={handleResetBalloons} className="btn-danger" style={{ flex: 1 }}>
+                                        <FaTrash /> Confirm Reset
+                                    </button>
+                                    <button onClick={() => setConfirmReset(null)} className="btn-secondary" style={{ flex: 1 }}>
+                                        Cancel
+                                    </button>
+                                </div>
+                            ) : (
+                                <button onClick={handleResetBalloons} className="btn-danger" style={{ width: '100%' }}>
+                                    <FaTrash /> Reset Balloons
+                                </button>
+                            )}
+                        </div>
+                        <div className="card" style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }}>
+                            <h3 style={{ color: 'var(--color-error)', marginTop: 0, marginBottom: 'var(--space-sm)' }}>
+                                ⚠️ Reset Everything
+                            </h3>
+                            <p style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-md)', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                                Permanently deletes <strong>all</strong> sites, teams, problems, and balloon records.
+                            </p>
+                            {confirmReset === 'all' ? (
+                                <div className="flex gap-sm">
+                                    <button onClick={handleReset} className="btn-danger" style={{ flex: 1 }}>
+                                        <FaTrash /> Confirm Delete All
+                                    </button>
+                                    <button onClick={() => setConfirmReset(null)} className="btn-secondary" style={{ flex: 1 }}>
+                                        Cancel
+                                    </button>
+                                </div>
+                            ) : (
+                                <button onClick={handleReset} className="btn-danger" style={{ width: '100%' }}>
+                                    <FaTrash /> DELETE EVERYTHING
+                                </button>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

@@ -23,7 +23,8 @@ export const PublisherPage = () => {
     const getTeam = (id) => teams.find(t => t.id === id);
     const getSite = (id) => sites.find(s => s.id === id);
 
-    let pendingBalloons = balloons.filter(b => b.status === 'pending');
+    // Filter unpublished balloons (independent of delivered state)
+    let pendingBalloons = balloons.filter(b => !b.published);
 
     if (selectedSiteId !== 'all') {
         pendingBalloons = pendingBalloons.filter(b => b.siteId === selectedSiteId);

@@ -31,8 +31,8 @@ export const VolunteerPage = () => {
     const getTeam = (id) => teams.find(t => t.id === id);
     const getSite = (id) => sites.find(s => s.id === id);
 
-    // Filter pending balloons
-    let pendingBalloons = balloons.filter(b => b.status === 'pending');
+    // Filter undelivered balloons (independent of published state)
+    let pendingBalloons = balloons.filter(b => !b.delivered);
 
     // Apply site filter
     if (selectedSiteId !== 'all') {
