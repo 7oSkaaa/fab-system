@@ -2,28 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
-import { FaBoxOpen, FaClock, FaMapMarkerAlt, FaCheck, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync } from 'react-icons/fa';
+import { FaBoxOpen, FaClock, FaMapMarkerAlt, FaBullhorn, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync } from 'react-icons/fa';
 
-export const VolunteerPage = () => {
-    const { balloons, teams, sites, problems, markDelivered } = useBalloonContext();
+export const PublisherPage = () => {
+    const { balloons, teams, sites, problems, markPublished } = useBalloonContext();
     const { user, loginWithGoogle, logout } = useAuth();
     const [selectedSiteId, setSelectedSiteId] = useState('all');
     const [loggingIn, setLoggingIn] = useState(false);
     const [countdown, setCountdown] = useState(15);
-    const [lastRefresh, setLastRefresh] = useState(Date.now());
 
     // Auto-refresh every 15 seconds
     useEffect(() => {
         const timer = setInterval(() => {
-            setCountdown(prev => {
-                if (prev <= 1) {
-                    setLastRefresh(Date.now()); // Trigger re-render
-                    return 15;
-                }
-                return prev - 1;
-            });
+            setCountdown(prev => (prev <= 1 ? 15 : prev - 1));
         }, 1000);
-
         return () => clearInterval(timer);
     }, []);
 
@@ -31,19 +23,16 @@ export const VolunteerPage = () => {
     const getTeam = (id) => teams.find(t => t.id === id);
     const getSite = (id) => sites.find(s => s.id === id);
 
-    // Filter pending balloons
     let pendingBalloons = balloons.filter(b => b.status === 'pending');
 
-    // Apply site filter
     if (selectedSiteId !== 'all') {
         pendingBalloons = pendingBalloons.filter(b => b.siteId === selectedSiteId);
     }
 
-    // Sort by timestamp
     pendingBalloons.sort((a, b) => a.timestamp - b.timestamp);
 
-    const handleDeliver = (id) => {
-        markDelivered(id, user?.email);
+    const handlePublish = (id) => {
+        markPublished(id, user?.email);
     };
 
     const handleGoogleLogin = async () => {
@@ -52,16 +41,11 @@ export const VolunteerPage = () => {
         setLoggingIn(false);
     };
 
-    const handleManualRefresh = () => {
-        setLastRefresh(Date.now());
-        setCountdown(15);
-    };
-
     return (
         <div className="container" style={{ paddingTop: 'var(--space-lg)', paddingBottom: 'var(--space-xl)' }}>
             <header className="page-header flex justify-between items-center flex-wrap gap-md">
                 <div className="page-title">
-                    <h1 className="page-title-main">🚀 Balloon Delivery</h1>
+                    <h1 className="page-title-main">📢 Balloon Publisher</h1>
                     <p className="page-title-sub" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {pendingBalloons.length} Pending
                         <span style={{
@@ -101,7 +85,7 @@ export const VolunteerPage = () => {
                     </div>
                 ) : (
                     <div className="flex justify-between items-center flex-wrap gap-sm">
-                        <span style={{ color: 'var(--text-muted)' }}>Sign in to track your deliveries</span>
+                        <span style={{ color: 'var(--text-muted)' }}>Sign in to track your publications</span>
                         <button onClick={handleGoogleLogin} className="btn-primary" disabled={loggingIn} style={{ padding: '6px 16px' }}>
                             <FaGoogle /> {loggingIn ? 'Signing in...' : 'Sign in with Google'}
                         </button>
@@ -135,7 +119,7 @@ export const VolunteerPage = () => {
                     <FaBoxOpen size={48} style={{ color: 'var(--text-dim)', marginBottom: 'var(--space-md)' }} />
                     <h3 style={{ color: 'var(--text-muted)' }}>All Caught Up!</h3>
                     <p style={{ color: 'var(--text-dim)' }}>
-                        {selectedSiteId === 'all' ? 'No pending balloons to deliver.' : 'No pending balloons for this site.'}
+                        {selectedSiteId === 'all' ? 'No pending balloons to publish.' : 'No pending balloons for this site.'}
                     </p>
                 </div>
             ) : (
@@ -148,9 +132,7 @@ export const VolunteerPage = () => {
                         const timeAgo = Math.floor((Date.now() - b.timestamp) / 60000);
 
                         return (
-                            <div key={b.id} className="card" style={{
-                                borderLeft: `6px solid ${color}`,
-                            }}>
+                            <div key={b.id} className="card" style={{ borderLeft: `6px solid ${color}` }}>
                                 <div className="flex justify-between items-start flex-wrap gap-md">
                                     <div>
                                         <h2 style={{ margin: 0, fontSize: '1.25rem' }}>
@@ -171,11 +153,11 @@ export const VolunteerPage = () => {
                                 </div>
 
                                 <button
-                                    onClick={() => handleDeliver(b.id)}
+                                    onClick={() => handlePublish(b.id)}
                                     className="btn-primary"
-                                    style={{ width: '100%', marginTop: 'var(--space-md)', background: 'var(--color-success)', borderColor: 'var(--color-success)' }}
+                                    style={{ width: '100%', marginTop: 'var(--space-md)' }}
                                 >
-                                    <FaCheck /> Mark Delivered
+                                    <FaBullhorn /> Mark Published
                                 </button>
                             </div>
                         );

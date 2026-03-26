@@ -5,6 +5,7 @@ import { AdminLogin, JudgeLogin } from './components/AdminLogin';
 import { AdminPage } from './pages/AdminPage';
 import { OperationsPage } from './pages/OperationsPage';
 import { VolunteerPage } from './pages/VolunteerPage';
+import { PublisherPage } from './pages/PublisherPage';
 import { PublicPage } from './pages/PublicPage';
 
 const HomePage = () => (
@@ -36,6 +37,9 @@ const HomePage = () => (
         </Link>
         <Link to="/volunteer" className="btn-menu">
           🚀 <span>Volunteer Dashboard</span>
+        </Link>
+        <Link to="/publisher" className="btn-menu">
+          📢 <span>Publisher Dashboard</span>
         </Link>
         <Link to="/public" className="btn-menu">
           📺 <span>Public Display</span>
@@ -78,6 +82,7 @@ const AppContent = () => {
       } />
       {/* Volunteer is PUBLIC - no login required */}
       <Route path="/volunteer" element={<VolunteerPage />} />
+      <Route path="/publisher" element={<PublisherPage />} />
       <Route path="/public" element={<PublicPage />} />
     </Routes>
   );

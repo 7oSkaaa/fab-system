@@ -162,6 +162,14 @@ export const BalloonProvider = ({ children }) => {
         });
     };
 
+    const markPublished = async (balloonId, publishedByEmail) => {
+        await updateDoc(doc(db, 'balloons', balloonId), {
+            status: 'published',
+            publishedBy: publishedByEmail || 'anonymous',
+            publishedAt: Date.now()
+        });
+    };
+
     const resetData = async () => {
         // Delete all documents in all collections
         const collections = ['sites', 'teams', 'problems', 'balloons'];
@@ -179,7 +187,7 @@ export const BalloonProvider = ({ children }) => {
             sites, addSite, removeSite,
             teams, addTeam, addTeams, removeTeam, updateTeamDisplayName,
             problems, addProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
-            balloons, addBalloon, markDelivered,
+            balloons, addBalloon, markDelivered, markPublished,
             resetData,
             loading
         }}>
