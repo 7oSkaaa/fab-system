@@ -103,6 +103,10 @@ export const BalloonProvider = ({ children }) => {
         await deleteDoc(doc(db, 'teams', id));
     };
 
+    const updateTeamDisplayName = async (teamId, displayName) => {
+        await updateDoc(doc(db, 'teams', teamId), { displayName: displayName.trim() });
+    };
+
     // Problems
     const addProblem = async (name, color, siteId = null) => {
         // Check for duplicate color in same scope (global or site-specific)
@@ -173,7 +177,7 @@ export const BalloonProvider = ({ children }) => {
     return (
         <BalloonContext.Provider value={{
             sites, addSite, removeSite,
-            teams, addTeam, addTeams, removeTeam,
+            teams, addTeam, addTeams, removeTeam, updateTeamDisplayName,
             problems, addProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
             balloons, addBalloon, markDelivered,
             resetData,

@@ -73,7 +73,7 @@ export const PublicPage = () => {
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis'
                                     }}>
-                                        {team.name}
+                                        {team.displayName || team.name}
                                     </h3>
 
                                     {site.problems.length === 0 ? (
