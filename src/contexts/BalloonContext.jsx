@@ -119,8 +119,7 @@ export const BalloonProvider = ({ children }) => {
     };
 
     // Problems
-    const addProblem = async (name, color, siteId = null) => {
-        // Check for duplicate color in same scope (global or site-specific)
+    const addProblem = async (name, color, siteId = null, colorName = '') => {
         const existingColors = problems
             .filter(p => p.siteId === siteId)
             .map(p => p.color.toLowerCase());
@@ -129,7 +128,11 @@ export const BalloonProvider = ({ children }) => {
             throw new Error(`Color ${color} is already used for another problem in this scope!`);
         }
 
-        await addDoc(collection(db, 'problems'), { name, color, siteId });
+        await addDoc(collection(db, 'problems'), { name, color, colorName, siteId });
+    };
+
+    const updateProblem = async (id, name, color, colorName) => {
+        await updateDoc(doc(db, 'problems', id), { name, color, colorName });
     };
 
     const removeProblem = async (id) => {
@@ -141,7 +144,7 @@ export const BalloonProvider = ({ children }) => {
         const batch = writeBatch(db);
         globalProblems.forEach(p => {
             const ref = doc(collection(db, 'problems'));
-            batch.set(ref, { name: p.name, color: p.color, siteId: siteId });
+            batch.set(ref, { name: p.name, color: p.color, colorName: p.colorName || '', siteId: siteId });
         });
         await batch.commit();
     };
@@ -218,7 +221,7 @@ export const BalloonProvider = ({ children }) => {
         <BalloonContext.Provider value={{
             sites, addSite, removeSite, reorderSites,
             teams, addTeam, addTeams, removeTeam, updateTeamDisplayName,
-            problems, addProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
+            problems, addProblem, updateProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
             balloons, addBalloon, markDelivered, markPublished, revertBalloon, deleteBalloon, resetBalloons,
             resetData,
             loading

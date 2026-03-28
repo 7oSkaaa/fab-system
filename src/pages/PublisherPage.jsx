@@ -147,6 +147,11 @@ export const PublisherPage = () => {
                                         <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: color }}>
                                             Problem {problem ? problem.name : '?'}
                                         </div>
+                                        {problem?.colorName && (
+                                            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'right' }}>
+                                                {problem.colorName} <span style={{ fontFamily: 'monospace', color: 'var(--text-dim)' }}>{problem.color}</span>
+                                            </div>
+                                        )}
                                         <div className="flex items-center gap-xs" style={{ fontSize: '0.85rem', color: 'var(--text-dim)', justifyContent: 'flex-end' }}>
                                             <FaClock /> {timeAgo}m ago
                                         </div>
