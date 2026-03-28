@@ -195,6 +195,11 @@ const BalloonsManager = ({ balloons, teams, problems, sites, revertBalloon, dele
                                     <span style={{ fontWeight: '700', fontSize: '1rem' }}>
                                         {team ? (team.displayName || team.name) : 'Unknown Team'}
                                     </span>
+                                    {team?.displayName && (
+                                        <span style={{ fontSize: '0.7rem', fontWeight: '400', color: 'var(--text-dim)', background: 'var(--bg-elevated)', padding: '2px 7px', borderRadius: 'var(--radius-full)', fontFamily: 'monospace' }}>
+                                            {team.name}
+                                        </span>
+                                    )}
                                     {getBalloonBadges(b).map(badge => (
                                         <span key={badge.label} style={{
                                             fontSize: '0.75rem', padding: '2px 8px',

@@ -64,17 +64,30 @@ export const PublicPage = () => {
                                 <div key={team.id} className="card" style={{
                                     borderLeft: '4px solid var(--color-primary)'
                                 }}>
-                                    <h3 style={{
+                                    <div style={{
                                         marginTop: 0,
                                         marginBottom: 'var(--space-sm)',
-                                        fontSize: '1rem',
-                                        fontWeight: '700',
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis'
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        flexWrap: 'wrap'
                                     }}>
-                                        {team.displayName || team.name}
-                                    </h3>
+                                        <h3 style={{
+                                            margin: 0,
+                                            fontSize: '1rem',
+                                            fontWeight: '700',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                        }}>
+                                            {team.displayName || team.name}
+                                        </h3>
+                                        {team.displayName && (
+                                            <span style={{ fontSize: '0.7rem', fontWeight: '400', color: 'var(--text-dim)', background: 'var(--bg-elevated)', padding: '2px 7px', borderRadius: 'var(--radius-full)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                                                {team.name}
+                                            </span>
+                                        )}
+                                    </div>
 
                                     {site.problems.length === 0 ? (
                                         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No problems defined.</p>

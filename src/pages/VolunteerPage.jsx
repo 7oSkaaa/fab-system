@@ -153,8 +153,13 @@ export const VolunteerPage = () => {
                             }}>
                                 <div className="flex justify-between items-start flex-wrap gap-md">
                                     <div>
-                                        <h2 style={{ margin: 0, fontSize: '1.25rem' }}>
+                                        <h2 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                             {team ? (team.displayName || team.name) : 'Unknown Team'}
+                                            {team?.displayName && (
+                                                <span style={{ fontSize: '0.7rem', fontWeight: '400', color: 'var(--text-dim)', background: 'var(--bg-elevated)', padding: '2px 7px', borderRadius: 'var(--radius-full)', fontFamily: 'monospace' }}>
+                                                    {team.name}
+                                                </span>
+                                            )}
                                         </h2>
                                         <div className="flex items-center gap-xs" style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>
                                             <FaMapMarkerAlt /> {site ? site.name : 'Unknown'}

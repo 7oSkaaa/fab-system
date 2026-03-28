@@ -35,7 +35,7 @@ export const OperationsPage = () => {
         const b = balloons.find(b => b.siteId === selectedSiteId && b.problemId === pId);
         if (!b) return null;
         const t = teams.find(team => team.id === b.teamId);
-        return t ? t.name : 'Unknown Team';
+        return t ? (t.displayName ? `${t.name} — ${t.displayName}` : t.name) : 'Unknown Team';
     };
 
     const handleSubmit = (e) => {
@@ -146,7 +146,7 @@ export const OperationsPage = () => {
                             >
                                 <option value="">-- Choose Team --</option>
                                 {siteTeams.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })).map(t => (
-                                    <option key={t.id} value={t.id}>{t.name}</option>
+                                    <option key={t.id} value={t.id}>{t.displayName ? `${t.name} — ${t.displayName}` : t.name}</option>
                                 ))}
                             </select>
                             {siteTeams.length === 0 && <span style={{ color: 'var(--color-error)', fontSize: '0.85rem' }}>No teams for this site.</span>}
