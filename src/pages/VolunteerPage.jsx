@@ -4,6 +4,12 @@ import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
 import { FaBoxOpen, FaClock, FaMapMarkerAlt, FaCheck, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync } from 'react-icons/fa';
 
+const isInAppBrowser = () => {
+    const ua = navigator.userAgent;
+    return /FBAN|FBAV|FB_IAB|Instagram|WhatsApp|Line\/|MicroMessenger/.test(ua) ||
+        (/iPhone|iPod|iPad/.test(ua) && !/Safari/.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua));
+};
+
 export const VolunteerPage = () => {
     const { balloons, teams, sites, problems, markDelivered } = useBalloonContext();
     const { user, loginWithGoogle, logout } = useAuth();
@@ -97,6 +103,15 @@ export const VolunteerPage = () => {
                         </div>
                         <button onClick={logout} className="btn-secondary" style={{ padding: '6px 12px' }}>
                             <FaSignOutAlt /> Logout
+                        </button>
+                    </div>
+                ) : isInAppBrowser() ? (
+                    <div className="flex justify-between items-center flex-wrap gap-sm">
+                        <span style={{ color: 'var(--color-warning)', fontSize: '0.9rem' }}>
+                            Open in Safari or Chrome to sign in — Google blocks in-app browsers.
+                        </span>
+                        <button onClick={() => navigator.clipboard?.writeText(window.location.href)} className="btn-secondary" style={{ padding: '6px 12px' }}>
+                            Copy Link
                         </button>
                     </div>
                 ) : (
