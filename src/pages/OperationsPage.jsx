@@ -46,9 +46,8 @@ export const OperationsPage = () => {
         }
 
         if (takenProblems.has(selectedProblemId)) {
-            if (!window.confirm(`Problem is already taken by ${getWinnerForProblem(selectedProblemId)}. Overwrite?`)) {
-                return;
-            }
+            setFeedback({ type: 'error', msg: `Problem already logged for ${getWinnerForProblem(selectedProblemId)}. Use the Admin panel to revert if needed.` });
+            return;
         }
 
         addBalloon(selectedProblemId, selectedTeamId, selectedSiteId);
@@ -167,7 +166,7 @@ export const OperationsPage = () => {
                             type="submit"
                             className="btn-primary"
                             style={{ padding: '14px 24px', fontSize: '1.1rem' }}
-                            disabled={!selectedProblemId || !selectedTeamId}
+                            disabled={!selectedProblemId || !selectedTeamId || takenProblems.has(selectedProblemId)}
                         >
                             <FaPaperPlane /> Log First Accepted
                         </button>
