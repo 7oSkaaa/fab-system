@@ -213,7 +213,7 @@ const BalloonsManager = ({ balloons, teams, problems, sites, revertBalloon, dele
                                     )}
                                 </div>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                                    <span style={{ color }}>Problem {problem?.name || '?'}</span>
+                                    <span style={{ color }}>Problem {problem?.name || '?'}{problem?.colorName ? ` — ${problem.colorName}` : ''}</span>
                                     <span>{site?.name || 'Unknown site'}</span>
                                     <span>{timeAgo}m ago</span>
                                 </div>

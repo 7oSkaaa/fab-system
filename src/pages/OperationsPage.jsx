@@ -120,6 +120,11 @@ export const OperationsPage = () => {
                                         >
                                             <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: p.color, display: 'inline-block', marginRight: '6px' }} />
                                             {p.name}
+                                            {p.colorName && (
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '400', display: 'block', marginTop: '2px' }}>
+                                                    {p.colorName}
+                                                </span>
+                                            )}
                                             {isTaken && <FaCheckCircle style={{ position: 'absolute', top: -6, right: -6, color: 'var(--color-success)', background: 'var(--bg-base)', borderRadius: '50%' }} />}
                                         </div>
                                     );

@@ -86,7 +86,7 @@ export const PublicPage = () => {
                                                     <div
                                                         key={p.id}
                                                         className={`balloon-slot ${hasBalloon ? 'filled' : ''}`}
-                                                        title={`Problem ${p.name}`}
+                                                        title={`Problem ${p.name}${p.colorName ? ` — ${p.colorName}` : ''} ${p.color}`}
                                                         style={hasBalloon ? { backgroundColor: p.color } : {}}
                                                     >
                                                         {hasBalloon ? '🎈' : p.name}
