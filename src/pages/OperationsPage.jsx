@@ -22,6 +22,11 @@ export const OperationsPage = () => {
         setSelectedTeamId('');
     }, [selectedSiteId]);
 
+    useEffect(() => {
+        const team = teams.find(t => t.id === selectedTeamId);
+        setCustomTeamName(team?.displayName || '');
+    }, [selectedTeamId, teams]);
+
     const siteTeams = teams.filter(t => t.siteId === selectedSiteId);
 
     const takenProblems = new Set();
