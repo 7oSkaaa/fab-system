@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useBalloonContext } from '../../contexts/BalloonContext';
 import { FaTrash, FaPlus, FaCopy, FaGlobe, FaMapMarkerAlt, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
 
-export const BALLOON_COLORS = [
+const BALLOON_COLORS = [
     { name: 'Red', value: '#ef4444' },
     { name: 'Green', value: '#22c55e' },
     { name: 'Blue', value: '#3b82f6' },
