@@ -10,6 +10,7 @@ import {
     updateDoc,
     writeBatch,
     getDocs,
+    runTransaction,
 } from 'firebase/firestore';
 
 const BalloonContext = createContext();
@@ -98,10 +99,6 @@ export const BalloonProvider = ({ children }) => {
     };
 
     // Teams
-    const addTeam = async (name, siteId) => {
-        await addDoc(collection(db, 'teams'), { name, siteId });
-    };
-
     const addTeams = async (teamsData) => {
         const batch = writeBatch(db);
         teamsData.forEach(t => {
@@ -115,8 +112,37 @@ export const BalloonProvider = ({ children }) => {
         await deleteDoc(doc(db, 'teams', id));
     };
 
-    const updateTeamDisplayName = async (teamId, displayName) => {
-        await updateDoc(doc(db, 'teams', teamId), { displayName: displayName.trim() });
+    const assignTeamNames = async (assignments) => {
+        if (assignments.length === 0) {
+            throw new Error('The CSV does not contain any team names.');
+        }
+        if (assignments.length > 500) {
+            throw new Error('A single CSV import can contain at most 500 teams.');
+        }
+        if (new Set(assignments.map(({ teamId }) => teamId)).size !== assignments.length) {
+            throw new Error('Each team can only appear once in a CSV import.');
+        }
+        if (assignments.some(({ displayName }) => !displayName.trim())) {
+            throw new Error('Every team must have a non-empty name.');
+        }
+
+        await runTransaction(db, async transaction => {
+            const teamRefs = assignments.map(({ teamId }) => doc(db, 'teams', teamId));
+            const snapshots = await Promise.all(teamRefs.map(teamRef => transaction.get(teamRef)));
+
+            snapshots.forEach((snapshot, index) => {
+                if (!snapshot.exists()) {
+                    throw new Error(`Team ${assignments[index].teamId} no longer exists.`);
+                }
+                if (snapshot.data().displayName?.trim()) {
+                    throw new Error(`${snapshot.data().name || 'This team'} already has a name and cannot be updated.`);
+                }
+            });
+
+            assignments.forEach(({ displayName }, index) => {
+                transaction.update(teamRefs[index], { displayName: displayName.trim() });
+            });
+        });
     };
 
     // Problems
@@ -221,7 +247,7 @@ export const BalloonProvider = ({ children }) => {
     return (
         <BalloonContext.Provider value={{
             sites, addSite, removeSite, reorderSites,
-            teams, addTeam, addTeams, removeTeam, updateTeamDisplayName,
+            teams, addTeams, removeTeam, assignTeamNames,
             problems, addProblem, updateProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
             balloons, addBalloon, markDelivered, markPublished, revertBalloon, deleteBalloon, resetBalloons,
             resetData,
