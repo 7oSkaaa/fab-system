@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useBalloonContext } from '../../contexts/BalloonContext';
 import { FaFileCsv, FaTrash, FaUsers } from 'react-icons/fa';
-import { parseTeamCsv } from '../../utils/teamCsv';
+import { parseTeamTsv } from '../../utils/teamTsv';
 
 export const TeamManager = () => {
-    const { sites, teams, addTeams, addTeamsFromCsv, removeTeam } = useBalloonContext();
+    const { sites, teams, addTeams, addTeamsFromTsv, removeTeam } = useBalloonContext();
     const [bulkPrefix, setBulkPrefix] = useState('Team ');
     const [startId, setStartId] = useState(1);
     const [endId, setEndId] = useState(10);
@@ -37,7 +37,7 @@ export const TeamManager = () => {
         }
     };
 
-    const handleCsvUpload = async (event) => {
+    const handleTsvUpload = async (event) => {
         const file = event.target.files?.[0];
         if (!file || !selectedSiteId) return;
 
@@ -45,11 +45,11 @@ export const TeamManager = () => {
         setImportStatus(null);
 
         try {
-            const csvTeams = parseTeamCsv(await file.text());
-            await addTeamsFromCsv(csvTeams, selectedSiteId);
-            setImportStatus({ type: 'success', message: `Created ${csvTeams.length} team${csvTeams.length === 1 ? '' : 's'} with names.` });
+            const tsvTeams = parseTeamTsv(await file.text());
+            await addTeamsFromTsv(tsvTeams, selectedSiteId);
+            setImportStatus({ type: 'success', message: `Created ${tsvTeams.length} team${tsvTeams.length === 1 ? '' : 's'} with university metadata.` });
         } catch (error) {
-            setImportStatus({ type: 'error', message: error instanceof Error ? error.message : 'Could not import this CSV.' });
+            setImportStatus({ type: 'error', message: error instanceof Error ? error.message : 'Could not import this TSV.' });
         } finally {
             setIsImporting(false);
             setFileInputKey(key => key + 1);
@@ -110,17 +110,17 @@ export const TeamManager = () => {
                     </div>
 
                     <div style={{ background: 'var(--bg-panel)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', order: 1 }}>
-                        <h4 style={{ margin: '0 0 0.5rem' }}>Create teams from CSV</h4>
+                        <h4 style={{ margin: '0 0 0.5rem' }}>Create teams from TSV</h4>
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-                            Upload columns <code>id</code> and <code>team name</code>. Both the team and its fixed display name are created directly; range generation is optional.
+                            Column 1 is the site seat number, column 4 is the team name, and column 5 is the university. A <code>File_Version</code> row is ignored automatically.
                         </p>
                         <label className="btn-secondary" style={{ width: '100%', opacity: isImporting ? 0.6 : 1 }}>
-                            <FaFileCsv /> {isImporting ? 'Importing…' : 'Choose CSV file'}
+                            <FaFileCsv /> {isImporting ? 'Importing…' : 'Choose TSV file'}
                             <input
                                 key={fileInputKey}
                                 type="file"
-                                accept=".csv,text/csv"
-                                onChange={handleCsvUpload}
+                                accept=".tsv,text/tab-separated-values"
+                                onChange={handleTsvUpload}
                                 disabled={isImporting}
                                 style={{ display: 'none' }}
                             />
@@ -149,7 +149,10 @@ export const TeamManager = () => {
                                             <div key={team.id} className="flex justify-between items-center" style={{ padding: '7px 0', borderBottom: '1px solid rgba(255,255,255,0.05)', gap: '8px' }}>
                                                 <span style={{ fontSize: '0.9rem', minWidth: 0 }}>
                                                     <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis' }}>{team.displayName || 'Name not assigned'}</span>
-                                                    <span style={{ display: 'block', color: 'var(--text-dim)', fontSize: '0.75rem', fontFamily: 'monospace' }}>{team.name}</span>
+                                                    <span style={{ display: 'block', color: 'var(--text-dim)', fontSize: '0.75rem', fontFamily: 'monospace' }}>Seat {team.seatNumber || team.name}</span>
+                                                    {team.university && (
+                                                        <span style={{ display: 'block', color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '2px' }}>{team.university}</span>
+                                                    )}
                                                 </span>
                                                 <button onClick={() => removeTeam(team.id)} style={{ color: 'var(--text-muted)', fontSize: '0.8rem', cursor: 'pointer', padding: '2px' }} title="Remove team">
                                                     <FaTrash />

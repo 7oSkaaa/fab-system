@@ -141,34 +141,36 @@ export const BalloonProvider = ({ children }) => {
         await batch.commit();
     };
 
-    const addTeamsFromCsv = async (csvTeams, siteId) => {
+    const addTeamsFromTsv = async (tsvTeams, siteId) => {
         if (!siteId) throw new Error('Select a site before importing teams.');
-        if (csvTeams.length > 500) throw new Error('A single CSV import can contain at most 500 teams.');
+        if (tsvTeams.length > 500) throw new Error('A single TSV import can contain at most 500 teams.');
 
         const siteTeams = teams.filter(team => team.siteId === siteId);
         const existingIdentifiers = new Set(siteTeams.flatMap(team =>
-            [team.externalId, team.name].filter(Boolean).map(normalizeTeamIdentifier)
+            [team.seatNumber, team.externalId, team.name].filter(Boolean).map(normalizeTeamIdentifier)
         ));
         const importedIdentifiers = new Set();
 
-        csvTeams.forEach(team => {
-            const identifier = normalizeTeamIdentifier(team.id);
+        tsvTeams.forEach(team => {
+            const identifier = normalizeTeamIdentifier(team.seatNumber);
             if (existingIdentifiers.has(identifier)) {
-                throw new Error(`Team ID "${team.id}" already exists for this site.`);
+                throw new Error(`Seat number "${team.seatNumber}" already exists for this site.`);
             }
             if (importedIdentifiers.has(identifier)) {
-                throw new Error(`Team ID "${team.id}" appears more than once in this CSV.`);
+                throw new Error(`Seat number "${team.seatNumber}" appears more than once in this TSV.`);
             }
             importedIdentifiers.add(identifier);
         });
 
         const batch = writeBatch(db);
-        csvTeams.forEach(team => {
+        tsvTeams.forEach(team => {
             const ref = doc(collection(db, 'teams'));
             batch.set(ref, {
-                externalId: team.id,
-                name: team.id,
-                displayName: team.displayName,
+                seatNumber: team.seatNumber,
+                externalId: team.seatNumber,
+                name: team.seatNumber,
+                displayName: team.teamName,
+                university: team.university,
                 siteId,
             });
         });
@@ -345,7 +347,7 @@ export const BalloonProvider = ({ children }) => {
     return (
         <BalloonContext.Provider value={{
             sites, addSite, updateSite, removeSite, reorderSites,
-            teams, addTeams, addTeamsFromCsv, removeTeam,
+            teams, addTeams, addTeamsFromTsv, removeTeam,
             problems, addProblem, addProblemsFromConfig, updateProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
             balloons, addBalloon, markDelivered, markPublished, revertDelivery, revertPublication, deleteBalloon, resetBalloons,
             resetData,
