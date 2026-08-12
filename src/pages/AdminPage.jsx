@@ -147,23 +147,30 @@ const getBalloonBadges = (b) => {
     return badges;
 };
 
-const BalloonsManager = ({ balloons, teams, problems, sites, revertBalloon, deleteBalloon }) => {
-    const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-    const [revertedIds, setRevertedIds] = useState(new Set());
+const BalloonsManager = ({ balloons, teams, problems, sites, revertDelivery, revertPublication, deleteBalloon }) => {
+    const [confirmation, setConfirmation] = useState(null);
+    const [toast, setToast] = useState(null);
 
     const getTeam = (id) => teams.find(t => t.id === id);
     const getProblem = (id) => problems.find(p => p.id === id);
     const getSite = (id) => sites.find(s => s.id === id);
 
-    const handleRevert = async (id) => {
-        await revertBalloon(id);
-        setRevertedIds(prev => new Set(prev).add(id));
-        setTimeout(() => setRevertedIds(prev => { const next = new Set(prev); next.delete(id); return next; }), 2500);
-    };
-
-    const handleDelete = async (id) => {
-        await deleteBalloon(id);
-        setConfirmDeleteId(null);
+    const handleConfirmedAction = async () => {
+        if (!confirmation) return;
+        const actions = {
+            judge: { run: deleteBalloon, message: 'Judge First Accepted entry reverted.' },
+            delivery: { run: revertDelivery, message: 'Volunteer delivery reverted.' },
+            publication: { run: revertPublication, message: 'Media publication reverted.' },
+        };
+        const action = actions[confirmation.action];
+        try {
+            await action.run(confirmation.id);
+            setToast({ type: 'success', message: action.message });
+            setConfirmation(null);
+            setTimeout(() => setToast(null), 3000);
+        } catch (error) {
+            setToast({ type: 'error', message: error instanceof Error ? error.message : 'Could not complete this revert.' });
+        }
     };
 
     const sorted = [...balloons].sort((a, b) => b.timestamp - a.timestamp);
@@ -178,14 +185,18 @@ const BalloonsManager = ({ balloons, teams, problems, sites, revertBalloon, dele
 
     return (
         <div className="flex flex-col gap-sm">
+            {toast && (
+                <div role="status" className="card" style={{ padding: 'var(--space-sm) var(--space-md)', color: toast.type === 'success' ? 'var(--color-success)' : 'var(--color-error)', borderColor: toast.type === 'success' ? 'var(--color-success)' : 'var(--color-error)' }}>
+                    {toast.message}
+                </div>
+            )}
             {sorted.map(b => {
                 const team = getTeam(b.teamId);
                 const problem = getProblem(b.problemId);
                 const site = getSite(b.siteId);
                 const color = problem?.color || '#888';
-                const timeAgo = Math.floor((Date.now() - b.timestamp) / 60000);
-                const justReverted = revertedIds.has(b.id);
-                const confirmingDelete = confirmDeleteId === b.id;
+                const loggedAt = new Date(b.timestamp).toLocaleString();
+                const confirming = confirmation?.id === b.id;
 
                 return (
                     <div key={b.id} className="card" style={{ borderLeft: `4px solid ${color}`, padding: 'var(--space-md)' }}>
@@ -211,51 +222,55 @@ const BalloonsManager = ({ balloons, teams, problems, sites, revertBalloon, dele
                                             {badge.icon} {badge.label}
                                         </span>
                                     ))}
-                                    {justReverted && (
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--color-success)', fontWeight: '600' }}>
-                                            ✓ Reverted
-                                        </span>
-                                    )}
                                 </div>
                                 <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                                     <span style={{ color }}>Problem {problem?.name || '?'}{problem?.colorName ? ` — ${problem.colorName}` : ''}</span>
                                     <span>{site?.name || 'Unknown site'}</span>
-                                    <span>{timeAgo}m ago</span>
+                                    <span>{loggedAt}</span>
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                    <span>Judge: {b.loggedBy || 'legacy/unknown'}</span>
+                                    {b.delivered && <span>Volunteer: {b.deliveredBy || 'anonymous'}</span>}
+                                    {b.published && <span>Media: {b.publishedBy || 'anonymous'}</span>}
                                 </div>
                             </div>
-                            <div className="flex gap-sm items-center">
-                                {(b.delivered || b.published) && (
+                            <div className="flex gap-sm items-center flex-wrap">
+                                {confirming ? (
+                                    <div className="flex gap-sm items-center" role="alert">
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--color-warning)' }}>
+                                            Confirm {confirmation.action} revert?
+                                        </span>
+                                        <button onClick={handleConfirmedAction} className="btn-danger" style={{ padding: '6px 10px' }}>Confirm</button>
+                                        <button onClick={() => setConfirmation(null)} className="btn-secondary" style={{ padding: '6px 10px' }}>Cancel</button>
+                                    </div>
+                                ) : (
+                                    <>
+                                    {b.published && (
                                     <button
-                                        onClick={() => handleRevert(b.id)}
+                                        onClick={() => setConfirmation({ id: b.id, action: 'publication' })}
                                         className="btn-secondary"
                                         style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
                                     >
-                                        <FaUndo /> Revert
+                                        <FaUndo /> Revert Media
                                     </button>
-                                )}
-                                {confirmingDelete ? (
-                                    <div className="flex gap-sm items-center">
-                                        <span style={{ fontSize: '0.8rem', color: 'var(--color-error)' }}>Delete?</span>
+                                    )}
+                                    {b.delivered && (
                                         <button
-                                            onClick={() => handleDelete(b.id)}
-                                            style={{ background: 'var(--color-error)', border: 'none', color: 'white', borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
+                                            onClick={() => setConfirmation({ id: b.id, action: 'delivery' })}
+                                            className="btn-secondary"
+                                            style={{ padding: '6px 12px', fontSize: '0.85rem' }}
                                         >
-                                            Yes
+                                            <FaUndo /> Revert Delivery
                                         </button>
-                                        <button
-                                            onClick={() => setConfirmDeleteId(null)}
-                                            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', color: 'var(--text-main)', borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer', fontSize: '0.8rem' }}
-                                        >
-                                            No
-                                        </button>
-                                    </div>
-                                ) : (
+                                    )}
                                     <button
-                                        onClick={() => setConfirmDeleteId(b.id)}
-                                        style={{ background: 'none', border: '2px solid var(--color-error)', color: 'var(--color-error)', borderRadius: 'var(--radius-sm)', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                        onClick={() => setConfirmation({ id: b.id, action: 'judge' })}
+                                        className="btn-danger"
+                                        style={{ padding: '6px 10px' }}
                                     >
-                                        <FaTrash size={12} />
+                                        <FaUndo /> Revert Judge Entry
                                     </button>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -267,7 +282,7 @@ const BalloonsManager = ({ balloons, teams, problems, sites, revertBalloon, dele
 };
 
 export const AdminPage = () => {
-    const { resetData, resetBalloons, revertBalloon, deleteBalloon, sites, teams, problems, balloons } = useBalloonContext();
+    const { resetData, resetBalloons, revertDelivery, revertPublication, deleteBalloon, sites, teams, problems, balloons } = useBalloonContext();
     const { logout, user } = useAuth();
     const [activeTab, setActiveTab] = useState('sites');
 
@@ -409,7 +424,8 @@ export const AdminPage = () => {
                         teams={teams}
                         problems={problems}
                         sites={sites}
-                        revertBalloon={revertBalloon}
+                        revertDelivery={revertDelivery}
+                        revertPublication={revertPublication}
                         deleteBalloon={deleteBalloon}
                     />
                 )}

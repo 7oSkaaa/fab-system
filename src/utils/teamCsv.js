@@ -84,39 +84,3 @@ export const parseTeamCsv = (text) => {
         return { id, displayName, rowNumber };
     });
 };
-
-const numericIdentifier = (value) => {
-    const match = value.trim().match(/^(?:team\s*)?(\d+)$/i);
-    return match?.[1].replace(/^0+(?=\d)/, '');
-};
-
-export const matchCsvTeams = (csvTeams, teams) => {
-    const matchedTeamIds = new Set();
-
-    return csvTeams.map(csvTeam => {
-        const normalizedCsvId = csvTeam.id.toLowerCase();
-        const csvNumber = numericIdentifier(csvTeam.id);
-        const matches = teams.filter(team => {
-            if (team.id.toLowerCase() === normalizedCsvId || team.name.toLowerCase() === normalizedCsvId) {
-                return true;
-            }
-            return csvNumber !== undefined && numericIdentifier(team.name) === csvNumber;
-        });
-
-        if (matches.length === 0) {
-            throw new Error(`Row ${csvTeam.rowNumber}: no created team matches ID "${csvTeam.id}".`);
-        }
-        if (matches.length > 1) {
-            throw new Error(`Row ${csvTeam.rowNumber}: ID "${csvTeam.id}" matches more than one team.`);
-        }
-        if (matchedTeamIds.has(matches[0].id)) {
-            throw new Error(`Row ${csvTeam.rowNumber}: ${matches[0].name} was already matched by another CSV row.`);
-        }
-        if (matches[0].displayName?.trim()) {
-            throw new Error(`Row ${csvTeam.rowNumber}: ${matches[0].name} already has a team name and cannot be updated.`);
-        }
-
-        matchedTeamIds.add(matches[0].id);
-        return { teamId: matches[0].id, displayName: csvTeam.displayName };
-    });
-};
