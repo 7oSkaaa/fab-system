@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useBalloonContext } from '../../contexts/BalloonContext';
-import { FaTrash, FaPlus, FaCopy, FaGlobe, FaMapMarkerAlt, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaTrash, FaPlus, FaCopy, FaGlobe, FaMapMarkerAlt, FaEdit, FaCheck, FaTimes, FaFileCode } from 'react-icons/fa';
+import { parseProblemYaml } from '../../utils/problemYaml';
 
 const BALLOON_COLORS = [
     { name: 'Red', value: '#ef4444' },
@@ -43,20 +44,27 @@ const ColorPicker = ({ selectedColor, onColorChange, onNameChange }) => {
 };
 
 export const ProblemManager = () => {
-    const { problems, addProblem, updateProblem, removeProblem, sites, copyProblemsToSite } = useBalloonContext();
+    const { problems, addProblem, addProblemsFromConfig, updateProblem, removeProblem, sites, copyProblemsToSite } = useBalloonContext();
 
     // Add form state
     const [name, setName] = useState('');
+    const [shortName, setShortName] = useState('');
+    const [fullName, setFullName] = useState('');
     const [selectedColor, setSelectedColor] = useState(BALLOON_COLORS[0].value);
     const [selectedColorName, setSelectedColorName] = useState(BALLOON_COLORS[0].name);
     const [selectedSiteId, setSelectedSiteId] = useState('global');
     const [error, setError] = useState('');
+    const [importStatus, setImportStatus] = useState(null);
+    const [isImporting, setIsImporting] = useState(false);
+    const [fileInputKey, setFileInputKey] = useState(0);
 
     // Edit state
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState('');
     const [editColor, setEditColor] = useState('');
     const [editColorName, setEditColorName] = useState('');
+    const [editShortName, setEditShortName] = useState('');
+    const [editFullName, setEditFullName] = useState('');
 
     // Copy confirm
     const [confirmCopySiteId, setConfirmCopySiteId] = useState(null);
@@ -67,8 +75,14 @@ export const ProblemManager = () => {
         if (!name.trim()) return;
         try {
             const siteId = selectedSiteId === 'global' ? null : selectedSiteId;
-            await addProblem(name.trim(), selectedColor, siteId, selectedColorName);
+            await addProblem(name.trim(), selectedColor, siteId, selectedColorName, {
+                letter: name.trim(),
+                shortName: shortName.trim(),
+                fullName: fullName.trim(),
+            });
             setName('');
+            setShortName('');
+            setFullName('');
         } catch (err) {
             setError(err.message);
         }
@@ -79,14 +93,42 @@ export const ProblemManager = () => {
         setEditName(p.name);
         setEditColor(p.color);
         setEditColorName(p.colorName || '');
+        setEditShortName(p.shortName || '');
+        setEditFullName(p.fullName || '');
     };
 
     const cancelEdit = () => setEditingId(null);
 
     const saveEdit = async () => {
         if (!editName.trim()) return;
-        await updateProblem(editingId, editName.trim(), editColor, editColorName);
+        await updateProblem(editingId, editName.trim(), editColor, editColorName, {
+            letter: editName.trim(),
+            shortName: editShortName.trim(),
+            fullName: editFullName.trim(),
+        });
         setEditingId(null);
+    };
+
+    const handleYamlUpload = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setIsImporting(true);
+        setImportStatus(null);
+        try {
+            const importedProblems = parseProblemYaml(await file.text());
+            const siteId = selectedSiteId === 'global' ? null : selectedSiteId;
+            await addProblemsFromConfig(importedProblems, siteId);
+            setImportStatus({
+                type: 'success',
+                message: `Created ${importedProblems.length} problem${importedProblems.length === 1 ? '' : 's'} from ${file.name}.`,
+            });
+        } catch (uploadError) {
+            setImportStatus({ type: 'error', message: uploadError instanceof Error ? uploadError.message : 'Could not import this YAML file.' });
+        } finally {
+            setIsImporting(false);
+            setFileInputKey(key => key + 1);
+        }
     };
 
     const handleCopyToSite = (siteId) => {
@@ -115,19 +157,45 @@ export const ProblemManager = () => {
                     width: '100%',
                 }}>
                     <div className="flex gap-sm items-center" style={{ flexWrap: 'wrap' }}>
+                        <label style={{ width: '70px', flex: 'none', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Letter
                         <input
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
                             placeholder="Letter (e.g. A)"
-                            style={{ width: '70px', flex: 'none' }}
+                            style={{ marginTop: '3px' }}
                             autoFocus
                         />
+                        </label>
+                        <label style={{ flex: 1, minWidth: '120px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Color name
                         <input
                             value={editColorName}
                             onChange={(e) => setEditColorName(e.target.value)}
                             placeholder="Color name (e.g. Blue)"
-                            style={{ flex: 1, minWidth: '120px' }}
+                            style={{ marginTop: '3px' }}
                         />
+                        </label>
+                    </div>
+                    <div className="flex gap-sm items-center" style={{ flexWrap: 'wrap' }}>
+                        <label style={{ width: '160px', flex: 'none', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Short name
+                        <input
+                            value={editShortName}
+                            onChange={(e) => setEditShortName(e.target.value)}
+                            placeholder="Short name (e.g. a)"
+                            style={{ marginTop: '3px' }}
+                        />
+                        </label>
+                        <label style={{ flex: 1, minWidth: '200px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Full problem name
+                        <input
+                            value={editFullName}
+                            onChange={(e) => setEditFullName(e.target.value)}
+                            placeholder="Full problem name"
+                            style={{ marginTop: '3px' }}
+                        />
+                        </label>
                     </div>
                     <ColorPicker
                         selectedColor={editColor}
@@ -176,23 +244,53 @@ export const ProblemManager = () => {
                 </select>
             </div>
 
-            {/* Add Form */}
-            <form onSubmit={handleSubmit} style={{ marginBottom: 'var(--space-lg)' }}>
+            {/* Manual Add Form */}
+            <div style={{ background: 'var(--bg-elevated)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-md)' }}>
+                <h4 style={{ margin: '0 0 var(--space-sm)' }}>Add manually</h4>
+                <form onSubmit={handleSubmit}>
                 <div className="flex gap-sm items-center" style={{ marginBottom: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                    <label style={{ width: '80px', flex: 'none', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Letter
                     <input
                         type="text"
                         placeholder="Letter (e.g. A)"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        style={{ width: '80px', flex: 'none' }}
+                        style={{ marginTop: '3px' }}
                     />
+                    </label>
+                    <label style={{ width: '170px', flex: 'none', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Short name
+                    <input
+                        type="text"
+                        placeholder="Short name (e.g. a)"
+                        value={shortName}
+                        onChange={(e) => setShortName(e.target.value)}
+                        style={{ marginTop: '3px' }}
+                    />
+                    </label>
+                    <label style={{ flex: 1, minWidth: '200px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Full problem name
+                    <input
+                        type="text"
+                        placeholder="Full problem name"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        style={{ marginTop: '3px' }}
+                    />
+                    </label>
+                </div>
+                <div className="flex gap-sm items-center" style={{ marginBottom: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                    <label style={{ flex: 1, minWidth: '130px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    Color name
                     <input
                         type="text"
                         placeholder="Color name (e.g. Blue)"
                         value={selectedColorName}
                         onChange={(e) => setSelectedColorName(e.target.value)}
-                        style={{ flex: 1, minWidth: '130px' }}
+                        style={{ marginTop: '3px' }}
                     />
+                    </label>
                     <button type="submit" className="btn-primary" style={{ padding: '8px 16px' }}>
                         <FaPlus /> Add
                     </button>
@@ -233,7 +331,32 @@ export const ProblemManager = () => {
                         <div style={{ width: '18px', height: '18px', borderRadius: '4px', background: selectedColor, border: '1px solid var(--border-color)' }} />
                     </div>
                 </div>
-            </form>
+                </form>
+            </div>
+
+            {/* YAML Import */}
+            <div style={{ background: 'var(--bg-elevated)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', marginBottom: 'var(--space-lg)' }}>
+                <h4 style={{ margin: '0 0 var(--space-xs)' }}>Import YAML configuration</h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 'var(--space-sm)' }}>
+                    Creates problems in the selected scope from <code>problems</code> entries containing <code>letter</code>, <code>short-name</code>, <code>name</code>, <code>color</code>, and a quoted <code>rgb</code> value.
+                </p>
+                <label className="btn-secondary" style={{ width: '100%', opacity: isImporting ? 0.6 : 1 }}>
+                    <FaFileCode /> {isImporting ? 'Importing…' : 'Choose YAML file'}
+                    <input
+                        key={fileInputKey}
+                        type="file"
+                        accept=".yaml,.yml,application/yaml,text/yaml"
+                        onChange={handleYamlUpload}
+                        disabled={isImporting}
+                        style={{ display: 'none' }}
+                    />
+                </label>
+                {importStatus && (
+                    <p style={{ color: importStatus.type === 'success' ? 'var(--color-success)' : 'var(--color-error)', fontSize: '0.9rem', marginTop: 'var(--space-sm)' }}>
+                        {importStatus.message}
+                    </p>
+                )}
+            </div>
 
             {/* Global Problems */}
             <div style={{ marginBottom: 'var(--space-lg)' }}>
@@ -309,6 +432,12 @@ const ProblemBadge = ({ problem, onRemove, onEdit }) => (
         <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: problem.color, flexShrink: 0 }} />
         <div className="flex flex-col" style={{ lineHeight: 1.2 }}>
             <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{problem.name}</span>
+            {problem.fullName && (
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-main)' }}>{problem.fullName}</span>
+            )}
+            {problem.shortName && (
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)', fontFamily: 'monospace' }}>short-name: {problem.shortName}</span>
+            )}
             {problem.colorName && (
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{problem.colorName}</span>
             )}

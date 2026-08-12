@@ -146,20 +146,69 @@ export const BalloonProvider = ({ children }) => {
     };
 
     // Problems
-    const addProblem = async (name, color, siteId = null, colorName = '') => {
+    const addProblem = async (name, color, siteId = null, colorName = '', details = {}) => {
+        const scopedProblems = problems.filter(problem => siteId === null
+            ? problem.siteId === null || problem.siteId === undefined
+            : problem.siteId === siteId);
         const existingColors = problems
-            .filter(p => p.siteId === siteId)
+            .filter(p => siteId === null ? p.siteId === null || p.siteId === undefined : p.siteId === siteId)
             .map(p => p.color.toLowerCase());
 
         if (existingColors.includes(color.toLowerCase())) {
             throw new Error(`Color ${color} is already used for another problem in this scope!`);
         }
+        if (scopedProblems.some(problem => problem.name.toLowerCase() === name.toLowerCase())) {
+            throw new Error(`Problem ${name} already exists in this scope.`);
+        }
+        if (details.shortName && scopedProblems.some(problem => problem.shortName?.toLowerCase() === details.shortName.toLowerCase())) {
+            throw new Error(`Problem short-name ${details.shortName} already exists in this scope.`);
+        }
 
-        await addDoc(collection(db, 'problems'), { name, color, colorName, siteId });
+        await addDoc(collection(db, 'problems'), { name, color, colorName, siteId, ...details });
     };
 
-    const updateProblem = async (id, name, color, colorName) => {
-        await updateDoc(doc(db, 'problems', id), { name, color, colorName });
+    const addProblemsFromConfig = async (configProblems, siteId = null) => {
+        if (configProblems.length > 500) {
+            throw new Error('A single YAML import can contain at most 500 problems.');
+        }
+
+        const scopedProblems = problems.filter(problem => siteId === null
+            ? problem.siteId === null || problem.siteId === undefined
+            : problem.siteId === siteId);
+        const existingLetters = new Set(scopedProblems.map(problem => problem.name.toLowerCase()));
+        const existingShortNames = new Set(scopedProblems.map(problem => problem.shortName?.toLowerCase()).filter(Boolean));
+        const existingColors = new Set(scopedProblems.map(problem => problem.color.toLowerCase()));
+
+        configProblems.forEach(problem => {
+            if (existingLetters.has(problem.letter.toLowerCase())) {
+                throw new Error(`Problem ${problem.letter} already exists in this scope.`);
+            }
+            if (existingShortNames.has(problem.shortName.toLowerCase())) {
+                throw new Error(`Problem short-name ${problem.shortName} already exists in this scope.`);
+            }
+            if (existingColors.has(problem.color.toLowerCase())) {
+                throw new Error(`Color ${problem.color} is already used in this scope.`);
+            }
+        });
+
+        const batch = writeBatch(db);
+        configProblems.forEach(problem => {
+            const ref = doc(collection(db, 'problems'));
+            batch.set(ref, {
+                name: problem.letter,
+                letter: problem.letter,
+                shortName: problem.shortName,
+                fullName: problem.fullName,
+                colorName: problem.colorName,
+                color: problem.color,
+                siteId,
+            });
+        });
+        await batch.commit();
+    };
+
+    const updateProblem = async (id, name, color, colorName, details = {}) => {
+        await updateDoc(doc(db, 'problems', id), { name, color, colorName, ...details });
     };
 
     const removeProblem = async (id) => {
@@ -171,7 +220,15 @@ export const BalloonProvider = ({ children }) => {
         const batch = writeBatch(db);
         globalProblems.forEach(p => {
             const ref = doc(collection(db, 'problems'));
-            batch.set(ref, { name: p.name, color: p.color, colorName: p.colorName || '', siteId: siteId });
+            batch.set(ref, {
+                name: p.name,
+                letter: p.letter || p.name,
+                shortName: p.shortName || '',
+                fullName: p.fullName || '',
+                color: p.color,
+                colorName: p.colorName || '',
+                siteId,
+            });
         });
         await batch.commit();
     };
@@ -248,7 +305,7 @@ export const BalloonProvider = ({ children }) => {
         <BalloonContext.Provider value={{
             sites, addSite, removeSite, reorderSites,
             teams, addTeams, removeTeam, assignTeamNames,
-            problems, addProblem, updateProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
+            problems, addProblem, addProblemsFromConfig, updateProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
             balloons, addBalloon, markDelivered, markPublished, revertBalloon, deleteBalloon, resetBalloons,
             resetData,
             loading

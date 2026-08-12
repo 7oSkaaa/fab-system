@@ -1,0 +1,98 @@
+problems:
+  - letter: A
+    short-name: a
+    name: 'A. Astra Colony'
+    color: Blue
+    rgb: '#0000ff'
+    load-data-files: false
+
+  - letter: B
+    short-name: b
+    name: 'B. Borealis Station'
+    color: Light Yellow
+    rgb: '#fff07a'
+    load-data-files: false
+
+  - letter: C
+    short-name: c
+    name: 'C. Cygnus Outpost'
+    color: Purple
+    rgb: '#800080'
+    load-data-files: false
+
+  - letter: D
+    short-name: d
+    name: 'D. Delta Prime'
+    color: Red
+    rgb: '#ff0000'
+    load-data-files: false
+
+  - letter: E
+    short-name: e
+    name: 'E. Eclipse Engine'
+    color: Green
+    rgb: '#00a651'
+    load-data-files: false
+
+  - letter: F
+    short-name: f
+    name: 'F. Frontier Signal'
+    color: Orange
+    rgb: '#ff8c00'
+    load-data-files: false
+
+  - letter: G
+    short-name: g
+    name: 'G. Galactic Relay'
+    color: Pink
+    rgb: '#ff69b4'
+    load-data-files: false
+
+  - letter: H
+    short-name: h
+    name: 'H. Helios Array'
+    color: Cyan
+    rgb: '#00bcd4'
+    load-data-files: false
+
+  - letter: I
+    short-name: i
+    name: 'I. Ion Passage'
+    color: White
+    rgb: '#f1f5f9'
+    load-data-files: false
+
+  - letter: J
+    short-name: j
+    name: 'J. Jovian Gate'
+    color: Black
+    rgb: '#1e293b'
+    load-data-files: false
+
+  - letter: K
+    short-name: k
+    name: 'K. Kuiper Network'
+    color: Lime
+    rgb: '#84cc16'
+    load-data-files: false
+
+  - letter: L
+    short-name: l
+    name: 'L. Lunar Archive'
+    color: Brown
+    rgb: '#8b4513'
+    load-data-files: false
+
+  - letter: M
+    short-name: m
+    name: 'M. Meteor Forge'
+    color: Gray
+    rgb: '#6b7280'
+    load-data-files: false
+
+  - letter: N
+    short-name: n
+    name: 'N. Nebula Crossing'
+    color: Magenta
+    rgb: '#d946ef'
+    load-data-files: false
