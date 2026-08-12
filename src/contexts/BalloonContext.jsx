@@ -104,6 +104,15 @@ export const BalloonProvider = ({ children }) => {
         await addDoc(collection(db, 'sites'), { name });
     };
 
+    const updateSite = async (id, name) => {
+        const trimmedName = name.trim();
+        if (!trimmedName) throw new Error('Site name cannot be empty.');
+        if (sites.some(site => site.id !== id && site.name.trim().toLowerCase() === trimmedName.toLowerCase())) {
+            throw new Error(`A site named "${trimmedName}" already exists.`);
+        }
+        await updateDoc(doc(db, 'sites', id), { name: trimmedName });
+    };
+
     const removeSite = async (id) => {
         const relatedCollections = ['problems', 'teams', 'balloons'];
         const snapshots = await Promise.all(relatedCollections.map(collectionName =>
@@ -352,7 +361,7 @@ export const BalloonProvider = ({ children }) => {
 
     return (
         <BalloonContext.Provider value={{
-            sites, addSite, removeSite, reorderSites,
+            sites, addSite, updateSite, removeSite, reorderSites,
             teams, addTeams, addTeamsFromCsv, removeTeam,
             problems, addProblem, addProblemsFromConfig, updateProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
             balloons, addBalloon, markDelivered, markPublished, revertJudgeBalloon, revertDelivery, revertPublication, deleteBalloon, resetBalloons,

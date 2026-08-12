@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useBalloonContext } from '../../contexts/BalloonContext';
-import { FaTrash, FaPlus, FaGripVertical } from 'react-icons/fa';
+import { FaTrash, FaPlus, FaGripVertical, FaEdit, FaCheck, FaTimes } from 'react-icons/fa';
 
 export const SiteManager = () => {
-    const { sites, addSite, removeSite, reorderSites } = useBalloonContext();
+    const { sites, addSite, updateSite, removeSite, reorderSites } = useBalloonContext();
     const [newSiteName, setNewSiteName] = useState('');
     const [dragIndex, setDragIndex] = useState(null);
     const [overIndex, setOverIndex] = useState(null);
     const [deletingSiteId, setDeletingSiteId] = useState(null);
     const [error, setError] = useState('');
+    const [editingSiteId, setEditingSiteId] = useState(null);
+    const [editingSiteName, setEditingSiteName] = useState('');
 
     const sortedSites = [...sites].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -64,6 +66,30 @@ export const SiteManager = () => {
         }
     };
 
+    const startEditing = (site) => {
+        setEditingSiteId(site.id);
+        setEditingSiteName(site.name);
+        setError('');
+    };
+
+    const cancelEditing = () => {
+        setEditingSiteId(null);
+        setEditingSiteName('');
+    };
+
+    const saveSiteName = async (event) => {
+        event.preventDefault();
+        if (!editingSiteName.trim()) return;
+
+        setError('');
+        try {
+            await updateSite(editingSiteId, editingSiteName);
+            cancelEditing();
+        } catch (updateError) {
+            setError(updateError instanceof Error ? updateError.message : 'Could not update the site name.');
+        }
+    };
+
     return (
         <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
             <h3 style={{ marginTop: 0 }}>Competition Sites</h3>
@@ -92,7 +118,7 @@ export const SiteManager = () => {
                     sortedSites.map((site, index) => (
                         <div
                             key={site.id}
-                            draggable
+                            draggable={editingSiteId !== site.id}
                             onDragStart={() => handleDragStart(index)}
                             onDragOver={(e) => handleDragOver(e, index)}
                             onDrop={(e) => handleDrop(e, index)}
@@ -112,20 +138,54 @@ export const SiteManager = () => {
                                 transition: 'background 0.15s, border-color 0.15s, opacity 0.15s',
                             }}
                         >
-                            <div className="flex items-center gap-sm">
+                            <div className="flex items-center gap-sm" style={{ flex: 1, minWidth: 0 }}>
                                 <FaGripVertical style={{ color: 'var(--text-dim)', flexShrink: 0 }} />
-                                <span>{site.name}</span>
+                                {editingSiteId === site.id ? (
+                                    <form onSubmit={saveSiteName} className="flex items-center gap-sm" style={{ flex: 1 }}>
+                                        <label style={{ flex: 1 }}>
+                                            <span style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)' }}>Site name</span>
+                                            <input
+                                                value={editingSiteName}
+                                                onChange={(event) => setEditingSiteName(event.target.value)}
+                                                autoFocus
+                                                style={{ padding: '6px 10px' }}
+                                            />
+                                        </label>
+                                        <button type="submit" className="btn-primary" style={{ padding: '6px 10px' }} disabled={!editingSiteName.trim()} title="Save site name">
+                                            <FaCheck />
+                                        </button>
+                                        <button type="button" onClick={cancelEditing} className="btn-secondary" style={{ padding: '6px 10px' }} title="Cancel editing">
+                                            <FaTimes />
+                                        </button>
+                                    </form>
+                                ) : (
+                                    <span>{site.name}</span>
+                                )}
                             </div>
-                            <button
-                                onClick={() => handleRemoveSite(site)}
-                                className="btn-danger"
-                                style={{ padding: '5px 10px' }}
-                                onDragStart={(e) => e.stopPropagation()}
-                                disabled={deletingSiteId !== null}
-                                title="Delete site and its associated data"
-                            >
-                                {deletingSiteId === site.id ? 'Deleting…' : <FaTrash />}
-                            </button>
+                            {editingSiteId !== site.id && (
+                                <div className="flex items-center gap-sm">
+                                    <button
+                                        onClick={() => startEditing(site)}
+                                        className="btn-secondary"
+                                        style={{ padding: '5px 10px' }}
+                                        onDragStart={(event) => event.stopPropagation()}
+                                        disabled={deletingSiteId !== null || editingSiteId !== null}
+                                        title="Edit site name"
+                                    >
+                                        <FaEdit />
+                                    </button>
+                                    <button
+                                        onClick={() => handleRemoveSite(site)}
+                                        className="btn-danger"
+                                        style={{ padding: '5px 10px' }}
+                                        onDragStart={(event) => event.stopPropagation()}
+                                        disabled={deletingSiteId !== null}
+                                        title="Delete site and its associated data"
+                                    >
+                                        {deletingSiteId === site.id ? 'Deleting…' : <FaTrash />}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))
                 )}
