@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useBalloonContext } from '../../contexts/BalloonContext';
-import { FaFileCsv, FaTrash, FaUsers } from 'react-icons/fa';
+import { FaFileAlt, FaTrash, FaUsers } from 'react-icons/fa';
 import { parseTeamTsv } from '../../utils/teamTsv';
 
 export const TeamManager = () => {
@@ -81,56 +81,56 @@ export const TeamManager = () => {
                     </div>
 
                     <div className="flex flex-col">
-                    <div style={{ background: 'var(--bg-panel)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', order: 2 }}>
-                        <h4 style={{ margin: '0 0 0.75rem' }}>Optional: create team IDs manually</h4>
-                        <form onSubmit={handleBulkSubmit} className="flex flex-col gap-md">
-                            <div className="flex gap-md flex-wrap">
-                                <div style={{ flex: 2, minWidth: '160px' }}>
-                                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ID prefix</label>
-                                    <input
-                                        type="text"
-                                        value={bulkPrefix}
-                                        onChange={(event) => setBulkPrefix(event.target.value)}
-                                        placeholder="e.g. Team "
-                                    />
+                        <div style={{ background: 'var(--bg-panel)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', order: 2 }}>
+                            <h4 style={{ margin: '0 0 0.75rem' }}>Optional: create team IDs manually</h4>
+                            <form onSubmit={handleBulkSubmit} className="flex flex-col gap-md">
+                                <div className="flex gap-md flex-wrap">
+                                    <div style={{ flex: 2, minWidth: '160px' }}>
+                                        <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ID prefix</label>
+                                        <input
+                                            type="text"
+                                            value={bulkPrefix}
+                                            onChange={(event) => setBulkPrefix(event.target.value)}
+                                            placeholder="e.g. Team "
+                                        />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: '110px' }}>
+                                        <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Start ID</label>
+                                        <input type="number" value={startId} onChange={(event) => setStartId(event.target.value)} />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: '110px' }}>
+                                        <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>End ID</label>
+                                        <input type="number" value={endId} onChange={(event) => setEndId(event.target.value)} />
+                                    </div>
                                 </div>
-                                <div style={{ flex: 1, minWidth: '110px' }}>
-                                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Start ID</label>
-                                    <input type="number" value={startId} onChange={(event) => setStartId(event.target.value)} />
-                                </div>
-                                <div style={{ flex: 1, minWidth: '110px' }}>
-                                    <label style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>End ID</label>
-                                    <input type="number" value={endId} onChange={(event) => setEndId(event.target.value)} />
-                                </div>
-                            </div>
-                            <button type="submit" className="btn-primary" disabled={Number(endId) < Number(startId)}>
-                                <FaUsers /> Generate {Math.max(0, Number(endId) - Number(startId) + 1)} Team IDs
-                            </button>
-                        </form>
-                    </div>
+                                <button type="submit" className="btn-primary" disabled={Number(endId) < Number(startId)}>
+                                    <FaUsers /> Generate {Math.max(0, Number(endId) - Number(startId) + 1)} Team IDs
+                                </button>
+                            </form>
+                        </div>
 
-                    <div style={{ background: 'var(--bg-panel)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', order: 1 }}>
-                        <h4 style={{ margin: '0 0 0.5rem' }}>Create teams from TSV</h4>
-                        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-                            Column 1 is the site seat number, column 4 is the team name, and column 5 is the university. A <code>File_Version</code> row is ignored automatically.
-                        </p>
-                        <label className="btn-secondary" style={{ width: '100%', opacity: isImporting ? 0.6 : 1 }}>
-                            <FaFileCsv /> {isImporting ? 'Importing…' : 'Choose TSV file'}
-                            <input
-                                key={fileInputKey}
-                                type="file"
-                                accept=".tsv,text/tab-separated-values"
-                                onChange={handleTsvUpload}
-                                disabled={isImporting}
-                                style={{ display: 'none' }}
-                            />
-                        </label>
-                        {importStatus && (
-                            <p style={{ color: importStatus.type === 'success' ? 'var(--color-success)' : 'var(--color-error)', fontSize: '0.9rem', marginTop: '0.75rem' }}>
-                                {importStatus.message}
+                        <div style={{ background: 'var(--bg-panel)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', order: 1 }}>
+                            <h4 style={{ margin: '0 0 0.5rem' }}>Create teams from TSV</h4>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+                                Column 1 is the site seat number, column 4 is the team name, and column 5 is the university. A <code>File_Version</code> row is ignored automatically.
                             </p>
-                        )}
-                    </div>
+                            <label className="btn-secondary" style={{ width: '100%', opacity: isImporting ? 0.6 : 1 }}>
+                                <FaFileAlt /> {isImporting ? 'Importing…' : 'Choose TSV file'}
+                                <input
+                                    key={fileInputKey}
+                                    type="file"
+                                    accept=".tsv,text/tab-separated-values"
+                                    onChange={handleTsvUpload}
+                                    disabled={isImporting}
+                                    style={{ display: 'none' }}
+                                />
+                            </label>
+                            {importStatus && (
+                                <p style={{ color: importStatus.type === 'success' ? 'var(--color-success)' : 'var(--color-error)', fontSize: '0.9rem', marginTop: '0.75rem' }}>
+                                    {importStatus.message}
+                                </p>
+                            )}
+                        </div>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>
