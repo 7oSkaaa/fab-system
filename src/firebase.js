@@ -12,9 +12,11 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+export const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
+
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
-export const auth = getAuth(app);
+export const auth = hasFirebaseConfig ? getAuth(app) : null;
 export const googleProvider = new GoogleAuthProvider();
 
 // Super admin from env

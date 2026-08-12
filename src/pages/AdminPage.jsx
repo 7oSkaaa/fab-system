@@ -383,7 +383,7 @@ export const AdminPage = () => {
                                 ? (tab.danger ? 'var(--color-error)' : 'var(--color-primary)')
                                 : 'var(--border-color)',
                             background: activeTab === tab.id
-                                ? (tab.danger ? 'rgba(239, 68, 68, 0.1)' : 'rgba(139, 92, 246, 0.1)')
+                                ? (tab.danger ? 'rgba(220, 38, 56, 0.1)' : 'rgba(20, 87, 217, 0.1)')
                                 : 'var(--bg-card)',
                             color: activeTab === tab.id
                                 ? (tab.danger ? 'var(--color-error)' : 'var(--color-primary)')

@@ -126,7 +126,7 @@ export const SiteManager = () => {
                             className="flex justify-between items-center"
                             style={{
                                 background: overIndex === index && dragIndex !== index
-                                    ? 'rgba(139, 92, 246, 0.15)'
+                                    ? 'rgba(20, 87, 217, 0.12)'
                                     : 'rgba(255,255,255,0.05)',
                                 padding: '0.75rem',
                                 borderRadius: 'var(--radius-sm)',

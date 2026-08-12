@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { FiMoon, FiSun } from 'react-icons/fi';
 import { BalloonProvider, useBalloonContext } from './contexts/BalloonContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { AdminLogin, JudgeLogin } from './components/AdminLogin';
@@ -58,6 +60,35 @@ const AppFooter = () => (
   </footer>
 );
 
+const getInitialTheme = () => {
+  const savedTheme = localStorage.getItem('fab-theme');
+  if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+const ThemeToggle = () => {
+  const [theme, setTheme] = useState(getInitialTheme);
+  const isDark = theme === 'dark';
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    localStorage.setItem('fab-theme', theme);
+  }, [theme]);
+
+  return (
+    <button
+      type="button"
+      className="theme-toggle"
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+      title={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+    >
+      {isDark ? <FiSun aria-hidden="true" /> : <FiMoon aria-hidden="true" />}
+      <span className="theme-toggle-label">{isDark ? 'Light mode' : 'Dark mode'}</span>
+    </button>
+  );
+};
+
 // Loading component
 const LoadingScreen = () => (
   <div className="container flex flex-col items-center justify-center" style={{ minHeight: '100vh' }}>
@@ -78,6 +109,7 @@ const AppContent = () => {
 
   return (
     <div className="app-shell">
+      <ThemeToggle />
       <main className="app-content">
         <Routes>
           <Route path="/" element={<HomePage />} />

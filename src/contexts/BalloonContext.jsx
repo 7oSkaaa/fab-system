@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db } from '../firebase';
+import { db, hasFirebaseConfig } from '../firebase';
 import {
     collection,
     doc,
@@ -40,10 +40,14 @@ export const BalloonProvider = ({ children }) => {
     const [teams, setTeams] = useState([]);
     const [problems, setProblems] = useState([]);
     const [balloons, setBalloons] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(hasFirebaseConfig);
 
     // --- Realtime Listeners ---
     useEffect(() => {
+        if (!hasFirebaseConfig) {
+            return undefined;
+        }
+
         const unsubscribers = [];
         let resolved = false;
 

@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth, googleProvider, getUserRole, isSuperAdmin, getUsers, addUser, removeUser, isAuthorized } from '../firebase';
+import { auth, hasFirebaseConfig, googleProvider, getUserRole, isSuperAdmin, getUsers, addUser, removeUser, isAuthorized } from '../firebase';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 const AuthContext = createContext();
@@ -9,7 +9,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(hasFirebaseConfig);
     const [role, setRole] = useState(null);
     const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
     const [users, setUsers] = useState([]);
@@ -32,6 +32,10 @@ export const AuthProvider = ({ children }) => {
     };
 
     useEffect(() => {
+        if (!hasFirebaseConfig) {
+            return undefined;
+        }
+
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setUser(user);
             await loadUserData(user);
@@ -43,6 +47,10 @@ export const AuthProvider = ({ children }) => {
 
     // Google Sign-In
     const loginWithGoogle = async () => {
+        if (!hasFirebaseConfig) {
+            return { success: false, error: 'Firebase is not configured for this environment.' };
+        }
+
         try {
             const result = await signInWithPopup(auth, googleProvider);
             await loadUserData(result.user);
@@ -54,6 +62,10 @@ export const AuthProvider = ({ children }) => {
 
     // Login for admin/judge (checks if authorized)
     const loginAsStaff = async () => {
+        if (!hasFirebaseConfig) {
+            return { success: false, error: 'Firebase is not configured for this environment.' };
+        }
+
         try {
             const result = await signInWithPopup(auth, googleProvider);
             const authorized = await isAuthorized(result.user.email);
@@ -69,6 +81,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const logout = async () => {
+        if (!hasFirebaseConfig) return;
         await signOut(auth);
     };
 

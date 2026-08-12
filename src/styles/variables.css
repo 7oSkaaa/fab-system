@@ -1,25 +1,31 @@
-/* CSS Variables & Design System - Theme 7.0 (Fancy Dark) */
+/* ICPC Championship Theme — light by default */
 :root {
-  /* Brand Colors - Vibrant on Dark */
-  --color-primary: #8b5cf6;   /* Purple */
-  --color-secondary: #06b6d4; /* Cyan */
-  --color-accent: #f59e0b;    /* Amber */
+  /* ICPC Brand Colors */
+  --color-primary: #1457d9;
+  --color-primary-deep: #073b9a;
+  --color-secondary: #dc2638;
+  --color-accent: #f4c430;
+  --color-white: #ffffff;
   
   /* Status Colors */
-  --color-success: #22c55e;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
+  --color-success: #1457d9;
+  --color-warning: #e3aa00;
+  --color-error: #dc2638;
   
-  /* Dark Backgrounds */
-  --bg-base: #0f0f1a;
-  --bg-card: #1a1a2e;
-  --bg-elevated: #252542;
-  --bg-hover: #30304d;
+  /* Competition Surfaces */
+  --bg-base: #f3f6fb;
+  --bg-card: #ffffff;
+  --bg-elevated: #f2f6fc;
+  --bg-hover: #e8f0fd;
+  --bg-panel: #f8faff;
   
   /* Text */
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
-  --text-dim: #64748b;
+  --text-main: #10264d;
+  --text-muted: #526789;
+  --text-dim: #7787a3;
+  --footer-text: #526789;
+  --backdrop-line: rgba(20, 87, 217, 0.06);
+  --backdrop-accent: rgba(20, 87, 217, 0.1);
 
   /* Balloon Colors */
   --balloon-red: #f43f5e;
@@ -44,13 +50,42 @@
   --radius-lg: 16px;
   --radius-xl: 20px;
   --radius-full: 9999px;
-  --border-color: rgba(139, 92, 246, 0.3);
+  --border-color: rgba(20, 87, 217, 0.2);
 
   /* Shadows & Glows */
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
-  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
+  --shadow-sm: 0 2px 8px rgba(2, 20, 54, 0.12);
+  --shadow-md: 0 12px 32px rgba(2, 20, 54, 0.16);
+  --shadow-glow: 0 0 0 3px rgba(244, 196, 48, 0.3), 0 12px 30px rgba(20, 87, 217, 0.16);
 
   /* Typography */
   --font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root[data-theme='dark'] {
+  --color-primary: #4d82f3;
+  --color-primary-deep: #2860d2;
+  --color-secondary: #ff5263;
+  --color-accent: #ffd64a;
+
+  --color-success: #4d82f3;
+  --color-warning: #ffd64a;
+  --color-error: #ff5263;
+
+  --bg-base: #07152d;
+  --bg-card: #101f3c;
+  --bg-elevated: #172a4c;
+  --bg-hover: #20385f;
+  --bg-panel: #0c1a34;
+
+  --text-main: #f5f8ff;
+  --text-muted: #afbfda;
+  --text-dim: #8294b3;
+  --footer-text: #9eafca;
+  --border-color: rgba(122, 158, 225, 0.22);
+  --backdrop-line: rgba(123, 158, 220, 0.055);
+  --backdrop-accent: rgba(77, 130, 243, 0.16);
+
+  --shadow-sm: 0 3px 12px rgba(0, 5, 18, 0.24);
+  --shadow-md: 0 16px 38px rgba(0, 5, 18, 0.3);
+  --shadow-glow: 0 0 0 3px rgba(255, 214, 74, 0.18), 0 14px 34px rgba(0, 5, 18, 0.3);
 }
