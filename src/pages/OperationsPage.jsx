@@ -4,13 +4,12 @@ import { useBalloonContext } from '../contexts/BalloonContext';
 import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome } from 'react-icons/fa';
 
 export const OperationsPage = () => {
-    const { sites, problems, teams, balloons, addBalloon, getProblemsForSite, updateTeamDisplayName } = useBalloonContext();
+    const { sites, problems, teams, balloons, addBalloon, getProblemsForSite } = useBalloonContext();
 
     const [selectedSiteId, setSelectedSiteId] = useState('');
     const [selectedProblemId, setSelectedProblemId] = useState('');
     const [selectedTeamId, setSelectedTeamId] = useState('');
     const [feedback, setFeedback] = useState(null);
-    const [customTeamName, setCustomTeamName] = useState('');
 
     useEffect(() => {
         if (sites.length > 0 && !selectedSiteId) {
@@ -21,11 +20,6 @@ export const OperationsPage = () => {
     useEffect(() => {
         setSelectedTeamId('');
     }, [selectedSiteId]);
-
-    useEffect(() => {
-        const team = teams.find(t => t.id === selectedTeamId);
-        setCustomTeamName(team?.displayName || '');
-    }, [selectedTeamId, teams]);
 
     const siteTeams = teams.filter(t => t.siteId === selectedSiteId);
 
@@ -56,13 +50,9 @@ export const OperationsPage = () => {
         }
 
         addBalloon(selectedProblemId, selectedTeamId, selectedSiteId);
-        if (customTeamName.trim()) {
-            updateTeamDisplayName(selectedTeamId, customTeamName.trim());
-        }
         setFeedback({ type: 'success', msg: 'Balloon Request Sent!' });
         setSelectedTeamId('');
         setSelectedProblemId('');
-        setCustomTeamName('');
 
         setTimeout(() => setFeedback(null), 3000);
     };
@@ -155,16 +145,6 @@ export const OperationsPage = () => {
                                 ))}
                             </select>
                             {siteTeams.length === 0 && <span style={{ color: 'var(--color-error)', fontSize: '0.85rem' }}>No teams for this site.</span>}
-                            <input
-                                type="text"
-                                placeholder="Override team display name (optional)"
-                                value={customTeamName}
-                                onChange={(e) => setCustomTeamName(e.target.value)}
-                                style={{ marginTop: 'var(--space-sm)' }}
-                            />
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-                                If provided, this name will be shown on the public scoreboard instead of the default team name.
-                            </span>
                         </div>
 
                         <button
