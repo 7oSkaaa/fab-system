@@ -7,6 +7,8 @@ export const SiteManager = () => {
     const [newSiteName, setNewSiteName] = useState('');
     const [dragIndex, setDragIndex] = useState(null);
     const [overIndex, setOverIndex] = useState(null);
+    const [deletingSiteId, setDeletingSiteId] = useState(null);
+    const [error, setError] = useState('');
 
     const sortedSites = [...sites].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -45,9 +47,30 @@ export const SiteManager = () => {
         setOverIndex(null);
     };
 
+    const handleRemoveSite = async (site) => {
+        const confirmed = window.confirm(
+            `Delete ${site.name}? This will also delete its copied problems, teams, and balloon records. Global problems will be kept.`
+        );
+        if (!confirmed) return;
+
+        setDeletingSiteId(site.id);
+        setError('');
+        try {
+            await removeSite(site.id);
+        } catch (removeError) {
+            setError(removeError instanceof Error ? removeError.message : `Could not delete ${site.name}.`);
+        } finally {
+            setDeletingSiteId(null);
+        }
+    };
+
     return (
         <div className="glass-panel" style={{ padding: '1.5rem', borderRadius: 'var(--radius-md)' }}>
             <h3 style={{ marginTop: 0 }}>Competition Sites</h3>
+
+            {error && (
+                <p style={{ color: 'var(--color-error)', marginBottom: 'var(--space-sm)' }}>⚠️ {error}</p>
+            )}
 
             <form onSubmit={handleSubmit} className="flex gap-md" style={{ marginBottom: '1rem' }}>
                 <input
@@ -94,12 +117,14 @@ export const SiteManager = () => {
                                 <span>{site.name}</span>
                             </div>
                             <button
-                                onClick={() => removeSite(site.id)}
+                                onClick={() => handleRemoveSite(site)}
                                 className="btn-danger"
                                 style={{ padding: '5px 10px' }}
                                 onDragStart={(e) => e.stopPropagation()}
+                                disabled={deletingSiteId !== null}
+                                title="Delete site and its associated data"
                             >
-                                <FaTrash />
+                                {deletingSiteId === site.id ? 'Deleting…' : <FaTrash />}
                             </button>
                         </div>
                     ))

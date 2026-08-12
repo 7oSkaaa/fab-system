@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useBalloonContext } from '../../contexts/BalloonContext';
 import { FaFileCsv, FaTrash, FaUsers } from 'react-icons/fa';
-import { matchCsvTeams, parseTeamCsv } from '../../utils/teamCsv';
+import { parseTeamCsv } from '../../utils/teamCsv';
 
 export const TeamManager = () => {
-    const { sites, teams, addTeams, removeTeam, assignTeamNames } = useBalloonContext();
+    const { sites, teams, addTeams, addTeamsFromCsv, removeTeam } = useBalloonContext();
     const [bulkPrefix, setBulkPrefix] = useState('Team ');
     const [startId, setStartId] = useState(1);
     const [endId, setEndId] = useState(10);
@@ -46,10 +46,8 @@ export const TeamManager = () => {
 
         try {
             const csvTeams = parseTeamCsv(await file.text());
-            const siteTeams = teams.filter(team => team.siteId === selectedSiteId);
-            const assignments = matchCsvTeams(csvTeams, siteTeams);
-            await assignTeamNames(assignments);
-            setImportStatus({ type: 'success', message: `Assigned ${assignments.length} team name${assignments.length === 1 ? '' : 's'}.` });
+            await addTeamsFromCsv(csvTeams, selectedSiteId);
+            setImportStatus({ type: 'success', message: `Created ${csvTeams.length} team${csvTeams.length === 1 ? '' : 's'} with names.` });
         } catch (error) {
             setImportStatus({ type: 'error', message: error instanceof Error ? error.message : 'Could not import this CSV.' });
         } finally {
@@ -82,8 +80,9 @@ export const TeamManager = () => {
                         </select>
                     </div>
 
-                    <div style={{ background: 'var(--bg-panel)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem' }}>
-                        <h4 style={{ margin: '0 0 0.75rem' }}>1. Create team IDs</h4>
+                    <div className="flex flex-col">
+                    <div style={{ background: 'var(--bg-panel)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', order: 2 }}>
+                        <h4 style={{ margin: '0 0 0.75rem' }}>Optional: create team IDs manually</h4>
                         <form onSubmit={handleBulkSubmit} className="flex flex-col gap-md">
                             <div className="flex gap-md flex-wrap">
                                 <div style={{ flex: 2, minWidth: '160px' }}>
@@ -110,10 +109,10 @@ export const TeamManager = () => {
                         </form>
                     </div>
 
-                    <div style={{ background: 'var(--bg-panel)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1.5rem' }}>
-                        <h4 style={{ margin: '0 0 0.5rem' }}>2. Assign names from CSV</h4>
+                    <div style={{ background: 'var(--bg-panel)', padding: '1rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', order: 1 }}>
+                        <h4 style={{ margin: '0 0 0.5rem' }}>Create teams from CSV</h4>
                         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-                            Upload columns <code>id</code> and <code>team name</code>. An ID may be written as <code>12</code> or <code>Team 12</code>. Names are assigned once and cannot be changed by another upload.
+                            Upload columns <code>id</code> and <code>team name</code>. Both the team and its fixed display name are created directly; range generation is optional.
                         </p>
                         <label className="btn-secondary" style={{ width: '100%', opacity: isImporting ? 0.6 : 1 }}>
                             <FaFileCsv /> {isImporting ? 'Importing…' : 'Choose CSV file'}
@@ -122,18 +121,16 @@ export const TeamManager = () => {
                                 type="file"
                                 accept=".csv,text/csv"
                                 onChange={handleCsvUpload}
-                                disabled={isImporting || teams.every(team => team.siteId !== selectedSiteId)}
+                                disabled={isImporting}
                                 style={{ display: 'none' }}
                             />
                         </label>
-                        {teams.every(team => team.siteId !== selectedSiteId) && (
-                            <p style={{ color: 'var(--color-warning)', fontSize: '0.85rem', marginTop: '0.5rem' }}>Create team IDs for this site before uploading names.</p>
-                        )}
                         {importStatus && (
                             <p style={{ color: importStatus.type === 'success' ? 'var(--color-success)' : 'var(--color-error)', fontSize: '0.9rem', marginTop: '0.75rem' }}>
                                 {importStatus.message}
                             </p>
                         )}
+                    </div>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1rem' }}>

@@ -1,45 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
-import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext';
+import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome, FaUndo } from 'react-icons/fa';
 
 export const OperationsPage = () => {
-    const { sites, problems, teams, balloons, addBalloon, getProblemsForSite } = useBalloonContext();
+    const { sites, problems, teams, balloons, addBalloon, revertJudgeBalloon, getProblemsForSite } = useBalloonContext();
+    const { user } = useAuth();
 
     const [selectedSiteId, setSelectedSiteId] = useState('');
     const [selectedProblemId, setSelectedProblemId] = useState('');
     const [selectedTeamId, setSelectedTeamId] = useState('');
     const [feedback, setFeedback] = useState(null);
+    const [confirmRevertId, setConfirmRevertId] = useState(null);
 
-    useEffect(() => {
-        if (sites.length > 0 && !selectedSiteId) {
-            setSelectedSiteId(sites[0].id);
-        }
-    }, [sites, selectedSiteId]);
-
-    useEffect(() => {
-        setSelectedTeamId('');
-    }, [selectedSiteId]);
-
-    const siteTeams = teams.filter(t => t.siteId === selectedSiteId);
+    const activeSiteId = selectedSiteId || sites[0]?.id || '';
+    const siteTeams = teams.filter(t => t.siteId === activeSiteId);
 
     const takenProblems = new Set();
     balloons.forEach(b => {
-        if (b.siteId === selectedSiteId) {
+        if (b.siteId === activeSiteId) {
             takenProblems.add(b.problemId);
         }
     });
 
     const getWinnerForProblem = (pId) => {
-        const b = balloons.find(b => b.siteId === selectedSiteId && b.problemId === pId);
+        const b = balloons.find(b => b.siteId === activeSiteId && b.problemId === pId);
         if (!b) return null;
         const t = teams.find(team => team.id === b.teamId);
         return t ? (t.displayName ? `${t.name} — ${t.displayName}` : t.name) : 'Unknown Team';
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!selectedSiteId || !selectedProblemId || !selectedTeamId) {
+        if (!activeSiteId || !selectedProblemId || !selectedTeamId) {
             setFeedback({ type: 'error', msg: 'Please fill all fields.' });
             return;
         }
@@ -49,13 +43,28 @@ export const OperationsPage = () => {
             return;
         }
 
-        addBalloon(selectedProblemId, selectedTeamId, selectedSiteId);
+        await addBalloon(selectedProblemId, selectedTeamId, activeSiteId, user?.email);
         setFeedback({ type: 'success', msg: 'Balloon Request Sent!' });
         setSelectedTeamId('');
         setSelectedProblemId('');
 
         setTimeout(() => setFeedback(null), 3000);
     };
+
+    const handleRevert = async (balloonId) => {
+        try {
+            await revertJudgeBalloon(balloonId, user?.email);
+            setConfirmRevertId(null);
+            setFeedback({ type: 'success', msg: 'First Accepted reverted successfully.' });
+            setTimeout(() => setFeedback(null), 3000);
+        } catch (error) {
+            setFeedback({ type: 'error', msg: error instanceof Error ? error.message : 'Could not revert this entry.' });
+        }
+    };
+
+    const ownBalloons = balloons
+        .filter(balloon => balloon.loggedBy === user?.email)
+        .sort((a, b) => b.timestamp - a.timestamp);
 
     return (
         <div className="container" style={{ paddingTop: 'var(--space-lg)', paddingBottom: 'var(--space-xl)' }}>
@@ -79,8 +88,12 @@ export const OperationsPage = () => {
                     <div className="card">
                         <label style={{ display: 'block', marginBottom: 'var(--space-sm)', color: 'var(--text-muted)', fontWeight: '600' }}>Current Site:</label>
                         <select
-                            value={selectedSiteId}
-                            onChange={(e) => setSelectedSiteId(e.target.value)}
+                            value={activeSiteId}
+                            onChange={(e) => {
+                                setSelectedSiteId(e.target.value);
+                                setSelectedTeamId('');
+                                setSelectedProblemId('');
+                            }}
                             style={{ fontSize: '1.1rem' }}
                         >
                             {sites.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -93,7 +106,7 @@ export const OperationsPage = () => {
                         <div>
                             <label style={{ display: 'block', marginBottom: 'var(--space-sm)', color: 'var(--text-muted)', fontWeight: '600' }}>Select Problem:</label>
                             <div className="flex flex-wrap gap-sm">
-                                {(selectedSiteId ? getProblemsForSite(selectedSiteId) : problems).slice().sort((a, b) => a.name.localeCompare(b.name)).map(p => {
+                                {(activeSiteId ? getProblemsForSite(activeSiteId) : problems).slice().sort((a, b) => a.name.localeCompare(b.name)).map(p => {
                                     const isTaken = takenProblems.has(p.id);
                                     const isSelected = selectedProblemId === p.id;
                                     return (
@@ -169,6 +182,45 @@ export const OperationsPage = () => {
                             </div>
                         )}
                     </form>
+
+                    {ownBalloons.length > 0 && (
+                        <div className="card flex flex-col gap-sm">
+                            <h3 style={{ margin: 0 }}>My First Accepted entries</h3>
+                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                You can revert an entry until delivery or publication begins. After that, ask an admin.
+                            </p>
+                            {ownBalloons.map(balloon => {
+                                const problem = problems.find(item => item.id === balloon.problemId);
+                                const team = teams.find(item => item.id === balloon.teamId);
+                                const canRevert = !balloon.delivered && !balloon.published;
+                                const confirming = confirmRevertId === balloon.id;
+                                return (
+                                    <div key={balloon.id} className="flex justify-between items-center gap-sm flex-wrap" style={{ padding: 'var(--space-sm)', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)' }}>
+                                        <span>
+                                            <strong>Problem {problem?.name || '?'}</strong> — {team ? (team.displayName || team.name) : 'Unknown Team'}
+                                        </span>
+                                        {confirming ? (
+                                            <div className="flex items-center gap-sm" role="alert">
+                                                <span style={{ color: 'var(--color-warning)', fontSize: '0.85rem' }}>Revert this First Accepted?</span>
+                                                <button onClick={() => handleRevert(balloon.id)} className="btn-danger" style={{ padding: '5px 10px' }}>Confirm</button>
+                                                <button onClick={() => setConfirmRevertId(null)} className="btn-secondary" style={{ padding: '5px 10px' }}>Cancel</button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => setConfirmRevertId(balloon.id)}
+                                                className="btn-secondary"
+                                                style={{ padding: '6px 10px' }}
+                                                disabled={!canRevert}
+                                                title={canRevert ? 'Revert First Accepted' : 'Only an admin can revert after delivery or publication'}
+                                            >
+                                                <FaUndo /> Revert
+                                            </button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             )}
         </div>

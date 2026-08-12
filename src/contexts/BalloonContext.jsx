@@ -10,12 +10,30 @@ import {
     updateDoc,
     writeBatch,
     getDocs,
+    query,
+    where,
     runTransaction,
 } from 'firebase/firestore';
 
 const BalloonContext = createContext();
 
 export const useBalloonContext = () => useContext(BalloonContext);
+
+const deleteDocumentsInBatches = async (documents) => {
+    const commits = [];
+    for (let start = 0; start < documents.length; start += 500) {
+        const batch = writeBatch(db);
+        documents.slice(start, start + 500).forEach(document => batch.delete(document.ref));
+        commits.push(batch.commit());
+    }
+    await Promise.all(commits);
+};
+
+const normalizeTeamIdentifier = (value) => {
+    const normalized = value.trim().toLowerCase();
+    const numericMatch = normalized.match(/^(?:team\s*)?(\d+)$/);
+    return numericMatch ? numericMatch[1].replace(/^0+(?=\d)/, '') : normalized;
+};
 
 export const BalloonProvider = ({ children }) => {
     // --- State ---
@@ -87,6 +105,13 @@ export const BalloonProvider = ({ children }) => {
     };
 
     const removeSite = async (id) => {
+        const relatedCollections = ['problems', 'teams', 'balloons'];
+        const snapshots = await Promise.all(relatedCollections.map(collectionName =>
+            getDocs(query(collection(db, collectionName), where('siteId', '==', id)))
+        ));
+
+        await Promise.all(snapshots.map(snapshot => deleteDocumentsInBatches(snapshot.docs)));
+
         await deleteDoc(doc(db, 'sites', id));
     };
 
@@ -108,41 +133,42 @@ export const BalloonProvider = ({ children }) => {
         await batch.commit();
     };
 
-    const removeTeam = async (id) => {
-        await deleteDoc(doc(db, 'teams', id));
-    };
+    const addTeamsFromCsv = async (csvTeams, siteId) => {
+        if (!siteId) throw new Error('Select a site before importing teams.');
+        if (csvTeams.length > 500) throw new Error('A single CSV import can contain at most 500 teams.');
 
-    const assignTeamNames = async (assignments) => {
-        if (assignments.length === 0) {
-            throw new Error('The CSV does not contain any team names.');
-        }
-        if (assignments.length > 500) {
-            throw new Error('A single CSV import can contain at most 500 teams.');
-        }
-        if (new Set(assignments.map(({ teamId }) => teamId)).size !== assignments.length) {
-            throw new Error('Each team can only appear once in a CSV import.');
-        }
-        if (assignments.some(({ displayName }) => !displayName.trim())) {
-            throw new Error('Every team must have a non-empty name.');
-        }
+        const siteTeams = teams.filter(team => team.siteId === siteId);
+        const existingIdentifiers = new Set(siteTeams.flatMap(team =>
+            [team.externalId, team.name].filter(Boolean).map(normalizeTeamIdentifier)
+        ));
+        const importedIdentifiers = new Set();
 
-        await runTransaction(db, async transaction => {
-            const teamRefs = assignments.map(({ teamId }) => doc(db, 'teams', teamId));
-            const snapshots = await Promise.all(teamRefs.map(teamRef => transaction.get(teamRef)));
+        csvTeams.forEach(team => {
+            const identifier = normalizeTeamIdentifier(team.id);
+            if (existingIdentifiers.has(identifier)) {
+                throw new Error(`Team ID "${team.id}" already exists for this site.`);
+            }
+            if (importedIdentifiers.has(identifier)) {
+                throw new Error(`Team ID "${team.id}" appears more than once in this CSV.`);
+            }
+            importedIdentifiers.add(identifier);
+        });
 
-            snapshots.forEach((snapshot, index) => {
-                if (!snapshot.exists()) {
-                    throw new Error(`Team ${assignments[index].teamId} no longer exists.`);
-                }
-                if (snapshot.data().displayName?.trim()) {
-                    throw new Error(`${snapshot.data().name || 'This team'} already has a name and cannot be updated.`);
-                }
-            });
-
-            assignments.forEach(({ displayName }, index) => {
-                transaction.update(teamRefs[index], { displayName: displayName.trim() });
+        const batch = writeBatch(db);
+        csvTeams.forEach(team => {
+            const ref = doc(collection(db, 'teams'));
+            batch.set(ref, {
+                externalId: team.id,
+                name: team.id,
+                displayName: team.displayName,
+                siteId,
             });
         });
+        await batch.commit();
+    };
+
+    const removeTeam = async (id) => {
+        await deleteDoc(doc(db, 'teams', id));
     };
 
     // Problems
@@ -242,15 +268,17 @@ export const BalloonProvider = ({ children }) => {
     };
 
     // Balloons
-    const addBalloon = async (problemId, teamId, siteId) => {
-        await addDoc(collection(db, 'balloons'), {
+    const addBalloon = async (problemId, teamId, siteId, loggedByEmail) => {
+        const reference = await addDoc(collection(db, 'balloons'), {
             problemId,
             teamId,
             siteId,
+            loggedBy: loggedByEmail || 'anonymous',
             delivered: false,
             published: false,
             timestamp: Date.now()
         });
+        return reference.id;
     };
 
     const markDelivered = async (balloonId, deliveredByEmail) => {
@@ -276,14 +304,35 @@ export const BalloonProvider = ({ children }) => {
         await batch.commit();
     };
 
-    const revertBalloon = async (balloonId) => {
+    const revertDelivery = async (balloonId) => {
         await updateDoc(doc(db, 'balloons', balloonId), {
             delivered: false,
-            published: false,
             deliveredBy: null,
             deliveredAt: null,
+        });
+    };
+
+    const revertPublication = async (balloonId) => {
+        await updateDoc(doc(db, 'balloons', balloonId), {
+            published: false,
             publishedBy: null,
             publishedAt: null,
+        });
+    };
+
+    const revertJudgeBalloon = async (balloonId, judgeEmail) => {
+        if (!judgeEmail) throw new Error('You must be signed in to revert this entry.');
+
+        await runTransaction(db, async transaction => {
+            const reference = doc(db, 'balloons', balloonId);
+            const snapshot = await transaction.get(reference);
+            if (!snapshot.exists()) throw new Error('This First Accepted entry no longer exists.');
+
+            const balloon = snapshot.data();
+            if (balloon.loggedBy !== judgeEmail) throw new Error('You can only revert your own First Accepted entries.');
+            if (balloon.delivered || balloon.published) throw new Error('An admin must revert this entry after delivery or publication.');
+
+            transaction.delete(reference);
         });
     };
 
@@ -304,9 +353,9 @@ export const BalloonProvider = ({ children }) => {
     return (
         <BalloonContext.Provider value={{
             sites, addSite, removeSite, reorderSites,
-            teams, addTeams, removeTeam, assignTeamNames,
+            teams, addTeams, addTeamsFromCsv, removeTeam,
             problems, addProblem, addProblemsFromConfig, updateProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
-            balloons, addBalloon, markDelivered, markPublished, revertBalloon, deleteBalloon, resetBalloons,
+            balloons, addBalloon, markDelivered, markPublished, revertJudgeBalloon, revertDelivery, revertPublication, deleteBalloon, resetBalloons,
             resetData,
             loading
         }}>
