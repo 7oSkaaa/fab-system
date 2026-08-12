@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
-import { FaBoxOpen, FaClock, FaMapMarkerAlt, FaBullhorn, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync } from 'react-icons/fa';
+import { FaBoxOpen, FaClock, FaMapMarkerAlt, FaBullhorn, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity } from 'react-icons/fa';
 
 const isInAppBrowser = () => {
     const ua = navigator.userAgent;
@@ -145,7 +145,7 @@ export const PublisherPage = () => {
                         const team = getTeam(b.teamId);
                         const site = getSite(b.siteId);
                         const color = problem ? problem.color : '#888';
-                        const timeAgo = Math.floor((Date.now() - b.timestamp) / 60000);
+                        const loggedAt = new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                         return (
                             <div key={b.id} className="card" style={{ borderLeft: `6px solid ${color}` }}>
@@ -162,18 +162,28 @@ export const PublisherPage = () => {
                                         <div className="flex items-center gap-xs" style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>
                                             <FaMapMarkerAlt /> {site ? site.name : 'Unknown'}
                                         </div>
+                                        {team?.university && (
+                                            <div className="flex items-center gap-xs" style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.85rem' }}>
+                                                <FaUniversity /> {team.university}
+                                            </div>
+                                        )}
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
                                         <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: color }}>
                                             Problem {problem ? problem.name : '?'}
                                         </div>
+                                        {problem?.fullName && (
+                                            <div style={{ fontSize: '0.9rem', color: 'var(--text-main)', maxWidth: '320px' }}>
+                                                {problem.fullName}
+                                            </div>
+                                        )}
                                         {problem?.colorName && (
                                             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'right' }}>
                                                 {problem.colorName} <span style={{ fontFamily: 'monospace', color: 'var(--text-dim)' }}>{problem.color}</span>
                                             </div>
                                         )}
                                         <div className="flex items-center gap-xs" style={{ fontSize: '0.85rem', color: 'var(--text-dim)', justifyContent: 'flex-end' }}>
-                                            <FaClock /> {timeAgo}m ago
+                                            <FaClock /> {loggedAt}
                                         </div>
                                     </div>
                                 </div>
