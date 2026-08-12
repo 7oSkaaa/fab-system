@@ -2,17 +2,16 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
-import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome, FaUndo } from 'react-icons/fa';
+import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome } from 'react-icons/fa';
 
 export const OperationsPage = () => {
-    const { sites, problems, teams, balloons, addBalloon, revertJudgeBalloon, getProblemsForSite } = useBalloonContext();
+    const { sites, problems, teams, balloons, addBalloon, getProblemsForSite } = useBalloonContext();
     const { user } = useAuth();
 
     const [selectedSiteId, setSelectedSiteId] = useState('');
     const [selectedProblemId, setSelectedProblemId] = useState('');
     const [selectedTeamId, setSelectedTeamId] = useState('');
     const [feedback, setFeedback] = useState(null);
-    const [confirmRevertId, setConfirmRevertId] = useState(null);
 
     const activeSiteId = selectedSiteId || sites[0]?.id || '';
     const siteTeams = teams.filter(t => t.siteId === activeSiteId);
@@ -50,21 +49,6 @@ export const OperationsPage = () => {
 
         setTimeout(() => setFeedback(null), 3000);
     };
-
-    const handleRevert = async (balloonId) => {
-        try {
-            await revertJudgeBalloon(balloonId, user?.email);
-            setConfirmRevertId(null);
-            setFeedback({ type: 'success', msg: 'First Accepted reverted successfully.' });
-            setTimeout(() => setFeedback(null), 3000);
-        } catch (error) {
-            setFeedback({ type: 'error', msg: error instanceof Error ? error.message : 'Could not revert this entry.' });
-        }
-    };
-
-    const ownBalloons = balloons
-        .filter(balloon => balloon.loggedBy === user?.email)
-        .sort((a, b) => b.timestamp - a.timestamp);
 
     return (
         <div className="container" style={{ paddingTop: 'var(--space-lg)', paddingBottom: 'var(--space-xl)' }}>
@@ -183,44 +167,6 @@ export const OperationsPage = () => {
                         )}
                     </form>
 
-                    {ownBalloons.length > 0 && (
-                        <div className="card flex flex-col gap-sm">
-                            <h3 style={{ margin: 0 }}>My First Accepted entries</h3>
-                            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                You can revert an entry until delivery or publication begins. After that, ask an admin.
-                            </p>
-                            {ownBalloons.map(balloon => {
-                                const problem = problems.find(item => item.id === balloon.problemId);
-                                const team = teams.find(item => item.id === balloon.teamId);
-                                const canRevert = !balloon.delivered && !balloon.published;
-                                const confirming = confirmRevertId === balloon.id;
-                                return (
-                                    <div key={balloon.id} className="flex justify-between items-center gap-sm flex-wrap" style={{ padding: 'var(--space-sm)', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-sm)' }}>
-                                        <span>
-                                            <strong>Problem {problem?.name || '?'}</strong> — {team ? (team.displayName || team.name) : 'Unknown Team'}
-                                        </span>
-                                        {confirming ? (
-                                            <div className="flex items-center gap-sm" role="alert">
-                                                <span style={{ color: 'var(--color-warning)', fontSize: '0.85rem' }}>Revert this First Accepted?</span>
-                                                <button onClick={() => handleRevert(balloon.id)} className="btn-danger" style={{ padding: '5px 10px' }}>Confirm</button>
-                                                <button onClick={() => setConfirmRevertId(null)} className="btn-secondary" style={{ padding: '5px 10px' }}>Cancel</button>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => setConfirmRevertId(balloon.id)}
-                                                className="btn-secondary"
-                                                style={{ padding: '6px 10px' }}
-                                                disabled={!canRevert}
-                                                title={canRevert ? 'Revert First Accepted' : 'Only an admin can revert after delivery or publication'}
-                                            >
-                                                <FaUndo /> Revert
-                                            </button>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
                 </div>
             )}
         </div>

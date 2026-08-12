@@ -23,6 +23,41 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-home {
+  flex: 1;
+}
+
+.app-footer {
+  padding: var(--space-md);
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+
+.app-footer a {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.app-footer a:hover,
+.app-footer a:focus-visible {
+  color: var(--color-secondary);
+  text-decoration: underline;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

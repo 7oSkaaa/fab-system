@@ -9,7 +9,7 @@ import { PublisherPage } from './pages/PublisherPage';
 import { PublicPage } from './pages/PublicPage';
 
 const HomePage = () => (
-  <div className="container flex flex-col items-center justify-center" style={{ minHeight: '100vh', padding: '2rem 1rem' }}>
+  <div className="container app-home flex flex-col items-center justify-center" style={{ padding: '2rem 1rem' }}>
     {/* Hero */}
     <div className="animate-float card animate-glow" style={{
       padding: '2rem 3rem',
@@ -49,6 +49,15 @@ const HomePage = () => (
   </div>
 );
 
+const AppFooter = () => (
+  <footer className="app-footer">
+    <span>Created by </span>
+    <a href="https://7oskaaa.github.io/portfolio/" target="_blank" rel="noreferrer">
+      7oSkaaa
+    </a>
+  </footer>
+);
+
 // Loading component
 const LoadingScreen = () => (
   <div className="container flex flex-col items-center justify-center" style={{ minHeight: '100vh' }}>
@@ -68,23 +77,28 @@ const AppContent = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/admin" element={
-        <AdminLogin>
-          <AdminPage />
-        </AdminLogin>
-      } />
-      <Route path="/ops" element={
-        <JudgeLogin>
-          <OperationsPage />
-        </JudgeLogin>
-      } />
-      {/* Volunteer is PUBLIC - no login required */}
-      <Route path="/volunteer" element={<VolunteerPage />} />
-      <Route path="/publisher" element={<PublisherPage />} />
-      <Route path="/public" element={<PublicPage />} />
-    </Routes>
+    <div className="app-shell">
+      <main className="app-content">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/admin" element={
+            <AdminLogin>
+              <AdminPage />
+            </AdminLogin>
+          } />
+          <Route path="/ops" element={
+            <JudgeLogin>
+              <OperationsPage />
+            </JudgeLogin>
+          } />
+          {/* Volunteer is PUBLIC - no login required */}
+          <Route path="/volunteer" element={<VolunteerPage />} />
+          <Route path="/publisher" element={<PublisherPage />} />
+          <Route path="/public" element={<PublicPage />} />
+        </Routes>
+      </main>
+      <AppFooter />
+    </div>
   );
 };
 

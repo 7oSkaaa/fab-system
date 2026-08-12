@@ -12,7 +12,6 @@ import {
     getDocs,
     query,
     where,
-    runTransaction,
 } from 'firebase/firestore';
 
 const BalloonContext = createContext();
@@ -329,22 +328,6 @@ export const BalloonProvider = ({ children }) => {
         });
     };
 
-    const revertJudgeBalloon = async (balloonId, judgeEmail) => {
-        if (!judgeEmail) throw new Error('You must be signed in to revert this entry.');
-
-        await runTransaction(db, async transaction => {
-            const reference = doc(db, 'balloons', balloonId);
-            const snapshot = await transaction.get(reference);
-            if (!snapshot.exists()) throw new Error('This First Accepted entry no longer exists.');
-
-            const balloon = snapshot.data();
-            if (balloon.loggedBy !== judgeEmail) throw new Error('You can only revert your own First Accepted entries.');
-            if (balloon.delivered || balloon.published) throw new Error('An admin must revert this entry after delivery or publication.');
-
-            transaction.delete(reference);
-        });
-    };
-
     const deleteBalloon = async (balloonId) => {
         await deleteDoc(doc(db, 'balloons', balloonId));
     };
@@ -364,7 +347,7 @@ export const BalloonProvider = ({ children }) => {
             sites, addSite, updateSite, removeSite, reorderSites,
             teams, addTeams, addTeamsFromCsv, removeTeam,
             problems, addProblem, addProblemsFromConfig, updateProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
-            balloons, addBalloon, markDelivered, markPublished, revertJudgeBalloon, revertDelivery, revertPublication, deleteBalloon, resetBalloons,
+            balloons, addBalloon, markDelivered, markPublished, revertDelivery, revertPublication, deleteBalloon, resetBalloons,
             resetData,
             loading
         }}>
