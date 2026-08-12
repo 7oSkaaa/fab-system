@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
-import { FaBoxOpen, FaClock, FaMapMarkerAlt, FaCheck, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity } from 'react-icons/fa';
+import { FaBoxOpen, FaClock, FaCheck, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity } from 'react-icons/fa';
 
 const isInAppBrowser = () => {
     const ua = navigator.userAgent;
@@ -164,8 +164,8 @@ export const VolunteerPage = () => {
                                                 </span>
                                             )}
                                         </h2>
-                                        <div className="flex items-center gap-xs" style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.9rem' }}>
-                                            <FaMapMarkerAlt /> {site ? site.name : 'Unknown'}
+                                        <div style={{ display: 'inline-block', marginTop: '6px', padding: '2px 8px', borderRadius: 'var(--radius-full)', background: 'var(--bg-elevated)', color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: '600' }}>
+                                            Site: {site ? site.name : 'Unknown'}
                                         </div>
                                         {team?.university && (
                                             <div className="flex items-center gap-xs" style={{ color: 'var(--text-muted)', marginTop: '4px', fontSize: '0.85rem' }}>
@@ -174,14 +174,12 @@ export const VolunteerPage = () => {
                                         )}
                                     </div>
                                     <div style={{ textAlign: 'right' }}>
-                                        <div style={{ fontWeight: 'bold', fontSize: '1.1rem', color: color }}>
+                                        <div style={{ fontWeight: '700', fontSize: '0.85rem', color: color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                             Problem {problem ? problem.name : '?'}
                                         </div>
-                                        {problem?.fullName && (
-                                            <div style={{ fontSize: '0.9rem', color: 'var(--text-main)', maxWidth: '320px' }}>
-                                                {problem.fullName}
-                                            </div>
-                                        )}
+                                        <div style={{ fontSize: '1.25rem', lineHeight: '1.3', fontWeight: '800', color: 'var(--text-main)', maxWidth: '420px', marginTop: '2px' }}>
+                                            {problem?.fullName || `Problem ${problem?.name || '?'}`}
+                                        </div>
                                         {problem?.colorName && (
                                             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                                 {problem.colorName} <span style={{ fontFamily: 'monospace', color: 'var(--text-dim)' }}>{problem.color}</span>
