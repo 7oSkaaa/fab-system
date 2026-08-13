@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FaBell, FaBellSlash, FaTimes } from 'react-icons/fa';
+import { FaBell, FaBellSlash } from 'react-icons/fa';
 
 const playChime = async (audioContextRef) => {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -37,29 +37,24 @@ const unlockAudio = async (audioContextRef) => {
 export const BalloonAlerts = ({ balloons, teams, problems, sites, pendingField, audience }) => {
     const knownIdsRef = useRef(null);
     const audioContextRef = useRef(null);
-    const timeoutRef = useRef(null);
-    const originalTitleRef = useRef(document.title);
     const [alertsEnabled, setAlertsEnabled] = useState(true);
     const [notificationPermission, setNotificationPermission] = useState(
         'Notification' in window ? Notification.permission : 'unsupported'
     );
-    const [alert, setAlert] = useState(null);
 
     useEffect(() => {
-        const originalTitle = originalTitleRef.current;
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/notification-sw.js').catch(() => {});
         }
-
-        return () => {
-            clearTimeout(timeoutRef.current);
-            document.title = originalTitle;
-        };
     }, []);
 
     useEffect(() => {
         const prepareAudio = () => {
-            if (alertsEnabled) unlockAudio(audioContextRef).catch(() => {});
+            if (!alertsEnabled) return;
+            unlockAudio(audioContextRef).catch(() => {});
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(setNotificationPermission);
+            }
         };
         document.addEventListener('pointerdown', prepareAudio, { once: true });
         document.addEventListener('keydown', prepareAudio, { once: true });
@@ -96,16 +91,6 @@ export const BalloonAlerts = ({ balloons, teams, problems, sites, pendingField, 
             ? `${arrivals.length} new first accepted balloons`
             : 'New first accepted balloon';
         const message = `${teamName} · ${problemName}${site ? ` · ${site.name}` : ''}`;
-
-        // This effect reacts to an external Firestore arrival, so updating the alert is intentional.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setAlert({ title, message, color: problem?.color || 'var(--color-primary)' });
-        document.title = `🎈 ${title} · FAB System`;
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => {
-            setAlert(null);
-            document.title = originalTitleRef.current;
-        }, 10000);
 
         if (alertsEnabled) {
             playChime(audioContextRef).catch(() => {});
@@ -159,37 +144,21 @@ export const BalloonAlerts = ({ balloons, teams, problems, sites, pendingField, 
         ? 'Enable alerts'
         : notificationPermission === 'default'
             ? 'Allow background alerts'
-            : 'Alerts on';
+            : notificationPermission === 'denied'
+                ? 'Sound alerts on'
+                : 'Background alerts on';
 
     return (
-        <>
-            <div className="alert-controls" aria-label={`${audience} notification controls`}>
-                <button
-                    type="button"
-                    className={alertsEnabled ? 'alerts-button enabled' : 'alerts-button'}
-                    onClick={handleAlertControl}
-                    aria-pressed={alertsEnabled}
-                >
-                    {alertsEnabled ? <FaBell aria-hidden="true" /> : <FaBellSlash aria-hidden="true" />}
-                    {buttonLabel}
-                </button>
-            </div>
-
-            {alert && (
-                <div className="balloon-alert" role="alert" style={{ '--alert-color': alert.color }}>
-                    <div className="balloon-alert-icon" aria-hidden="true">🎈</div>
-                    <div className="balloon-alert-copy">
-                        <strong>{alert.title}</strong>
-                        <span>{alert.message}</span>
-                    </div>
-                    <button type="button" onClick={() => {
-                        setAlert(null);
-                        document.title = originalTitleRef.current;
-                    }} aria-label="Dismiss notification">
-                        <FaTimes />
-                    </button>
-                </div>
-            )}
-        </>
+        <div className="alert-controls" aria-label={`${audience} notification controls`}>
+            <button
+                type="button"
+                className={alertsEnabled ? 'alerts-button enabled' : 'alerts-button'}
+                onClick={handleAlertControl}
+                aria-pressed={alertsEnabled}
+            >
+                {alertsEnabled ? <FaBell aria-hidden="true" /> : <FaBellSlash aria-hidden="true" />}
+                {buttonLabel}
+            </button>
+        </div>
     );
 };
