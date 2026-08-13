@@ -124,7 +124,7 @@ export const OperationsPage = () => {
                     </div>
 
                     {/* Form */}
-                    <form onSubmit={handleSubmit} className="card flex flex-col gap-lg">
+                    <form onSubmit={handleSubmit} className="card judge-entry-form flex flex-col gap-lg">
                         {/* Problem Selection */}
                         <div>
                             <label style={{ display: 'block', marginBottom: 'var(--space-sm)', color: 'var(--text-muted)', fontWeight: '600' }}>Select Problem:</label>
