@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { db, hasFirebaseConfig } from '../firebase';
+import { auth, db, hasFirebaseConfig } from '../firebase';
 import {
     collection,
     doc,
@@ -292,6 +292,19 @@ export const BalloonProvider = ({ children }) => {
             published: false,
             timestamp: Date.now()
         });
+        if (auth?.currentUser) {
+            auth.currentUser.getIdToken().then(idToken => fetch('/api/push/notify', {
+                method: 'POST',
+                keepalive: true,
+                headers: {
+                    'Authorization': `Bearer ${idToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ balloonId: reference.id }),
+            }).then(response => {
+                if (!response.ok) console.error('Could not send balloon notifications:', response.status);
+            })).catch(error => console.error('Could not send balloon notifications:', error));
+        }
         return reference.id;
     };
 

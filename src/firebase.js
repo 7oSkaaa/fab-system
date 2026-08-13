@@ -3,7 +3,7 @@ import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Firebase config from environment variables
-const firebaseConfig = {
+export const firebaseConfig = {
     apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
     authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -14,9 +14,9 @@ const firebaseConfig = {
 
 export const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = hasFirebaseConfig ? getAuth(app) : null;
+export const firebaseApp = initializeApp(firebaseConfig);
+export const db = getFirestore(firebaseApp);
+export const auth = hasFirebaseConfig ? getAuth(firebaseApp) : null;
 export const googleProvider = new GoogleAuthProvider();
 
 // Super admin from env

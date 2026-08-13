@@ -102,7 +102,9 @@ body {
 /* ===== REAL-TIME BALLOON ALERTS ===== */
 .alert-controls {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: var(--space-sm);
   margin-bottom: var(--space-sm);
 }
 
@@ -131,6 +133,73 @@ body {
 .alerts-button:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
   outline-offset: 3px;
+}
+
+.push-setup-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: var(--space-md);
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 55%, var(--border-color));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--bg-card));
+  color: var(--text-main);
+}
+
+.push-setup-card > svg {
+  flex: 0 0 auto;
+  color: var(--color-primary);
+  font-size: 1.35rem;
+}
+
+.push-setup-card div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.push-setup-card span,
+.push-error {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.push-error {
+  color: var(--color-error);
+}
+
+/* ===== OPERATIONS TICKETS ===== */
+.ticket-details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(240px, auto);
+  align-items: start;
+  gap: var(--space-md);
+}
+
+.ticket-team-details,
+.ticket-problem-details {
+  min-width: 0;
+}
+
+.ticket-problem-details {
+  text-align: right;
+}
+
+.ticket-problem-name {
+  max-width: 420px;
+  margin-top: 2px;
+  color: var(--text-main);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.ticket-time {
+  justify-content: flex-end;
+  color: var(--text-dim);
+  font-size: 0.85rem;
 }
 
 /* Scrollbar */
@@ -468,6 +537,24 @@ input:focus, select:focus {
     min-width: 30px;
     font-size: 0.7rem;
   }
+
+  .ticket-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ticket-problem-details {
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-color);
+    text-align: left;
+  }
+
+  .ticket-problem-name {
+    max-width: none;
+  }
+
+  .ticket-time {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 480px) {
@@ -490,6 +577,15 @@ input:focus, select:focus {
   
   .card, .glass-panel, .page-header {
     padding: var(--space-sm) !important;
+  }
+
+  .ticket-problem-name {
+    font-size: 1.1rem;
+  }
+
+  .alert-controls {
+    align-items: flex-end;
+    flex-direction: column;
   }
   
   .page-header {

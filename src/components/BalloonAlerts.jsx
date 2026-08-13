@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import { FaBell, FaBellSlash } from 'react-icons/fa';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FaBell, FaBellSlash, FaMobileAlt } from 'react-icons/fa';
+import { getPushSupport, listenForForegroundPush, subscribeToPush } from '../services/pushNotifications';
 
-const playChime = async (audioContextRef) => {
+const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+const playChime = async audioContextRef => {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
-
     const context = audioContextRef.current || new AudioContext();
     audioContextRef.current = context;
     if (context.state === 'suspended') await context.resume();
@@ -14,151 +17,95 @@ const playChime = async (audioContextRef) => {
         const oscillator = context.createOscillator();
         const gain = context.createGain();
         const noteStart = start + index * 0.13;
-
-        oscillator.type = 'sine';
         oscillator.frequency.value = frequency;
         gain.gain.setValueAtTime(0, noteStart);
-        gain.gain.linearRampToValueAtTime(0.18, noteStart + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.28);
+        gain.gain.linearRampToValueAtTime(0.2, noteStart + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, noteStart + 0.3);
         oscillator.connect(gain).connect(context.destination);
         oscillator.start(noteStart);
-        oscillator.stop(noteStart + 0.3);
+        oscillator.stop(noteStart + 0.32);
     });
 };
 
-const unlockAudio = async (audioContextRef) => {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const context = audioContextRef.current || new AudioContext();
-    audioContextRef.current = context;
-    if (context.state === 'suspended') await context.resume();
-};
-
-export const BalloonAlerts = ({ balloons, teams, problems, sites, pendingField, audience }) => {
-    const knownIdsRef = useRef(null);
+export const BalloonAlerts = ({ audience }) => {
     const audioContextRef = useRef(null);
-    const [alertsEnabled, setAlertsEnabled] = useState(true);
-    const [notificationPermission, setNotificationPermission] = useState(
-        'Notification' in window ? Notification.permission : 'unsupported'
-    );
+    const unsubscribeRef = useRef(null);
+    const [status, setStatus] = useState(isIos && !isStandalone ? 'install' : 'checking');
+    const [error, setError] = useState('');
 
-    useEffect(() => {
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/notification-sw.js').catch(() => {});
+    const activatePush = useCallback(async () => {
+        setError('');
+        setStatus('enabling');
+        try {
+            await playChime(audioContextRef);
+            const { messaging, registration } = await subscribeToPush(audience);
+            unsubscribeRef.current?.();
+            unsubscribeRef.current = listenForForegroundPush(messaging, payload => {
+                playChime(audioContextRef).catch(() => {});
+                navigator.vibrate?.([250, 120, 250, 120, 400]);
+                const notification = payload.notification || {};
+                registration.showNotification(notification.title || 'New first accepted balloon', {
+                    body: notification.body || 'Open FAB System for details.',
+                    icon: '/favicon.png',
+                    badge: '/favicon.png',
+                    requireInteraction: true,
+                    tag: payload.messageId || 'fab-balloon',
+                    data: { url: window.location.href },
+                });
+            });
+            setStatus('ready');
+        } catch (activationError) {
+            setError(activationError.message);
+            setStatus('error');
         }
-    }, []);
+    }, [audience]);
 
     useEffect(() => {
-        const prepareAudio = () => {
-            if (!alertsEnabled) return;
-            unlockAudio(audioContextRef).catch(() => {});
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission().then(setNotificationPermission);
-            }
-        };
-        document.addEventListener('pointerdown', prepareAudio, { once: true });
-        document.addEventListener('keydown', prepareAudio, { once: true });
-
+        if (isIos && !isStandalone) return undefined;
+        let cancelled = false;
+        getPushSupport().then(support => {
+            if (cancelled) return;
+            if (!support.configured) setStatus('unconfigured');
+            else if (!support.supported) setStatus('unsupported');
+            else if (Notification.permission === 'granted') activatePush();
+            else setStatus('permission');
+        });
         return () => {
-            document.removeEventListener('pointerdown', prepareAudio);
-            document.removeEventListener('keydown', prepareAudio);
+            cancelled = true;
+            unsubscribeRef.current?.();
         };
-    }, [alertsEnabled]);
+    }, [activatePush]);
 
-    useEffect(() => {
-        const currentIds = new Set(balloons.map(balloon => balloon.id));
-
-        if (knownIdsRef.current === null) {
-            knownIdsRef.current = currentIds;
-            return;
-        }
-
-        const arrivals = balloons.filter(balloon =>
-            !knownIdsRef.current.has(balloon.id) && !balloon[pendingField]
+    if (status === 'install') {
+        return (
+            <div className="push-setup-card" role="status">
+                <FaMobileAlt aria-hidden="true" />
+                <div>
+                    <strong>Install FAB for background alerts</strong>
+                    <span>Tap Share, choose “Add to Home Screen,” then open FAB from its new icon.</span>
+                </div>
+            </div>
         );
-        knownIdsRef.current = currentIds;
-        if (arrivals.length === 0) return;
+    }
 
-        const newest = arrivals.reduce((latest, balloon) =>
-            (balloon.timestamp ?? 0) > (latest.timestamp ?? 0) ? balloon : latest
-        );
-        const team = teams.find(item => item.id === newest.teamId);
-        const problem = problems.find(item => item.id === newest.problemId);
-        const site = sites.find(item => item.id === newest.siteId);
-        const teamName = team?.displayName || team?.name || 'Unknown team';
-        const problemName = problem?.fullName || `Problem ${problem?.name || '?'}`;
-        const title = arrivals.length > 1
-            ? `${arrivals.length} new first accepted balloons`
-            : 'New first accepted balloon';
-        const message = `${teamName} · ${problemName}${site ? ` · ${site.name}` : ''}`;
-
-        if (alertsEnabled) {
-            playChime(audioContextRef).catch(() => {});
-            navigator.vibrate?.([250, 120, 250, 120, 400]);
-        }
-        if (alertsEnabled && 'Notification' in window && Notification.permission === 'granted') {
-            const notificationOptions = {
-                body: message,
-                tag: `balloon-${newest.id}`,
-                icon: '/favicon.png',
-                badge: '/favicon.png',
-                requireInteraction: true,
-                renotify: true,
-                silent: false,
-                vibrate: [250, 120, 250, 120, 400],
-                timestamp: Date.now(),
-                data: { url: window.location.href },
-            };
-            try {
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.ready
-                        .then(registration => registration.showNotification(title, notificationOptions))
-                        .catch(() => new Notification(title, notificationOptions));
-                } else {
-                    new Notification(title, notificationOptions);
-                }
-            } catch {
-                // The in-app alert and audio remain available on browsers with limited notification options.
-            }
-        }
-    }, [alertsEnabled, balloons, pendingField, problems, sites, teams]);
-
-    const enableAlerts = async () => {
-        if ('Notification' in window && Notification.permission === 'default') {
-            const permission = await Notification.requestPermission();
-            setNotificationPermission(permission);
-        }
-        await playChime(audioContextRef).catch(() => {});
-        setAlertsEnabled(true);
-    };
-
-    const handleAlertControl = () => {
-        if (!alertsEnabled || notificationPermission === 'default') {
-            enableAlerts();
-            return;
-        }
-        setAlertsEnabled(false);
-    };
-
-    const buttonLabel = !alertsEnabled
-        ? 'Enable alerts'
-        : notificationPermission === 'default'
-            ? 'Allow background alerts'
-            : notificationPermission === 'denied'
-                ? 'Sound alerts on'
-                : 'Background alerts on';
+    const ready = status === 'ready';
+    const buttonText = ready ? 'Background alerts on' : status === 'enabling' ? 'Enabling…' : 'Enable background alerts';
 
     return (
         <div className="alert-controls" aria-label={`${audience} notification controls`}>
             <button
                 type="button"
-                className={alertsEnabled ? 'alerts-button enabled' : 'alerts-button'}
-                onClick={handleAlertControl}
-                aria-pressed={alertsEnabled}
+                className={ready ? 'alerts-button enabled' : 'alerts-button'}
+                onClick={activatePush}
+                disabled={status === 'enabling' || status === 'unsupported' || status === 'unconfigured'}
+                aria-pressed={ready}
             >
-                {alertsEnabled ? <FaBell aria-hidden="true" /> : <FaBellSlash aria-hidden="true" />}
-                {buttonLabel}
+                {ready ? <FaBell aria-hidden="true" /> : <FaBellSlash aria-hidden="true" />}
+                {buttonText}
             </button>
+            {error && <span className="push-error" role="status">{error}</span>}
+            {status === 'unconfigured' && <span className="push-error">Push server setup is required.</span>}
+            {status === 'unsupported' && <span className="push-error">Background notifications are not supported in this browser.</span>}
         </div>
     );
 };

@@ -20,17 +20,25 @@ A cool, "First Accepted" balloon tracking system for CPC competitions.
     npm run dev
     ```
 
-3.  **Usage**:
+3. **Configure free background push notifications**:
+   - In Firebase Console, open **Project settings → Cloud Messaging → Web Push certificates** and generate a key pair.
+   - Add the public key as `VITE_FIREBASE_VAPID_KEY` in the Vercel project environment and local `.env`.
+   - Create a Firebase service-account key and add its complete JSON as the server-only Vercel variable `FIREBASE_SERVICE_ACCOUNT_JSON`.
+   - Add the admin email as the server-only Vercel variable `SUPER_ADMIN_EMAIL`.
+   - The notification sender runs in the included Vercel Functions free tier; Firebase Cloud Functions are not required.
+
+4.  **Usage**:
     - Navigate to `/admin` first to set up Sites, Teams, and Problems.
     - Open `/ops` on Judge computers.
     - Open `/volunteer` on Runner mobile devices.
     - Display `/public` on the main hall screen.
+    - On iPhone/iPad, use **Share → Add to Home Screen**, open FAB from its Home Screen icon, and tap **Enable background alerts**. iOS only permits Web Push for installed Home Screen web apps.
 
 ## Technologies
 - React + Vite
 - Vanilla CSS (Variables + Flexbox/Grid)
-- Context API + LocalStorage
+- Firebase Firestore, Cloud Functions, and Cloud Messaging
 - React Icons
 
 ## Design
-The system features a centralized "Neon Dark" theme in `src/styles/variables.css` for a modern competitive programming vibe.
+The system includes responsive ICPC-inspired light and dark themes in `src/styles/variables.css`.

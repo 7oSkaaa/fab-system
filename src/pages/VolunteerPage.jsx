@@ -55,11 +55,6 @@ export const VolunteerPage = () => {
     return (
         <div className="container" style={{ paddingTop: 'var(--space-lg)', paddingBottom: 'var(--space-xl)' }}>
             <BalloonAlerts
-                balloons={balloons}
-                teams={teams}
-                problems={problems}
-                sites={sites}
-                pendingField="delivered"
                 audience="Volunteer"
             />
             <header className="page-header flex justify-between items-center flex-wrap gap-md">
@@ -163,8 +158,8 @@ export const VolunteerPage = () => {
                             <div key={b.id} className="card" style={{
                                 borderLeft: `6px solid ${color}`,
                             }}>
-                                <div className="flex justify-between items-start flex-wrap gap-md">
-                                    <div>
+                                <div className="ticket-details">
+                                    <div className="ticket-team-details">
                                         <h2 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                             {team ? (team.displayName || team.name) : 'Unknown Team'}
                                             {team?.displayName && (
@@ -182,11 +177,11 @@ export const VolunteerPage = () => {
                                             </div>
                                         )}
                                     </div>
-                                    <div style={{ textAlign: 'right' }}>
+                                    <div className="ticket-problem-details">
                                         <div style={{ fontWeight: '700', fontSize: '0.85rem', color: color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                                             Problem {problem ? problem.name : '?'}
                                         </div>
-                                        <div style={{ fontSize: '1.25rem', lineHeight: '1.3', fontWeight: '800', color: 'var(--text-main)', maxWidth: '420px', marginTop: '2px' }}>
+                                        <div className="ticket-problem-name">
                                             {problem?.fullName || `Problem ${problem?.name || '?'}`}
                                         </div>
                                         {problem?.colorName && (
@@ -194,7 +189,7 @@ export const VolunteerPage = () => {
                                                 {problem.colorName} <span style={{ fontFamily: 'monospace', color: 'var(--text-dim)' }}>{problem.color}</span>
                                             </div>
                                         )}
-                                        <div className="flex items-center gap-xs" style={{ fontSize: '0.85rem', color: 'var(--text-dim)', justifyContent: 'flex-end' }}>
+                                        <div className="ticket-time flex items-center gap-xs">
                                             <FaClock /> {loggedAt}
                                         </div>
                                     </div>
