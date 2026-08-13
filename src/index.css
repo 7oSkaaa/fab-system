@@ -582,6 +582,87 @@ input:focus, select:focus {
   box-shadow: var(--shadow-glow);
 }
 
+/* ===== ADMIN BALLOON HISTORY ===== */
+.balloon-admin-card {
+  display: grid;
+  gap: var(--space-md);
+  min-width: 0;
+  padding: var(--space-md);
+  border-left: 4px solid;
+}
+
+.balloon-admin-content,
+.balloon-admin-details {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-xs);
+}
+
+.balloon-admin-heading,
+.balloon-admin-title,
+.balloon-admin-event,
+.balloon-admin-people {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.balloon-admin-title {
+  gap: var(--space-sm);
+}
+
+.balloon-admin-university {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.balloon-admin-event {
+  gap: 4px 12px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.balloon-admin-people {
+  gap: 3px 12px;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.balloon-admin-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  min-height: 38px;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--border-color);
+}
+
+.balloon-admin-action {
+  min-height: 38px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.balloon-admin-confirmation {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.balloon-admin-confirmation-copy {
+  margin-right: auto;
+  color: var(--color-warning);
+  font-size: 0.8rem;
+}
+
 /* ===== PAGE HEADER ===== */
 .page-header {
   background: var(--bg-card);
@@ -760,6 +841,21 @@ input:focus, select:focus {
   .ticket-actions {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .balloon-admin-actions:not(.is-confirming) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  .balloon-admin-action {
+    width: 100%;
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  .balloon-admin-confirmation .balloon-admin-action {
+    width: auto;
+  }
 }
 
 @media (max-width: 480px) {
@@ -835,6 +931,28 @@ input:focus, select:focus {
   .balloon-slot {
     min-width: 24px;
     font-size: 0.6rem;
+  }
+
+  .balloon-admin-card {
+    gap: var(--space-sm);
+  }
+
+  .balloon-admin-actions:not(.is-confirming) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .balloon-admin-confirmation {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .balloon-admin-confirmation-copy {
+    grid-column: 1 / -1;
+    margin-right: 0;
+  }
+
+  .balloon-admin-confirmation .balloon-admin-action {
+    width: 100%;
   }
 }
 

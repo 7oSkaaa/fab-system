@@ -199,13 +199,16 @@ const BalloonsManager = ({ balloons, teams, problems, sites, revertDelivery, rev
                 const confirming = confirmation?.id === b.id;
 
                 return (
-                    <div key={b.id} className="card" style={{ borderLeft: `4px solid ${color}`, padding: 'var(--space-md)' }}>
-                        <div className="flex justify-between items-center flex-wrap gap-sm">
-                            <div className="flex flex-col gap-xs">
-                                <div className="flex items-center gap-sm" style={{ flexWrap: 'wrap' }}>
+                    <div key={b.id} className="card balloon-admin-card" style={{ borderLeftColor: color }}>
+                        <div className="balloon-admin-content">
+                            <div className="balloon-admin-heading">
+                                <div className="balloon-admin-title">
                                     <span style={{ fontWeight: '700', fontSize: '1rem' }}>
                                         {team ? (team.displayName || team.name) : 'Unknown Team'}
                                     </span>
+                                    {team?.university && (
+                                        <span className="balloon-admin-university">{team.university}</span>
+                                    )}
                                     {team?.displayName && (
                                         <span style={{ fontSize: '0.7rem', fontWeight: '400', color: 'var(--text-dim)', background: 'var(--bg-elevated)', padding: '2px 7px', borderRadius: 'var(--radius-full)', fontFamily: 'monospace' }}>
                                             {team.name}
@@ -223,56 +226,55 @@ const BalloonsManager = ({ balloons, teams, problems, sites, revertDelivery, rev
                                         </span>
                                     ))}
                                 </div>
-                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                            </div>
+                            <div className="balloon-admin-details">
+                                <div className="balloon-admin-event">
                                     <span style={{ color }}>Problem {problem?.name || '?'}{problem?.colorName ? ` — ${problem.colorName}` : ''}</span>
                                     <span>{site?.name || 'Unknown site'}</span>
                                     <span>{loggedAt}</span>
                                 </div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                <div className="balloon-admin-people">
                                     <span>Judge: {b.loggedBy || 'legacy/unknown'}</span>
                                     {b.delivered && <span>Volunteer: {b.deliveredBy || 'anonymous'}</span>}
                                     {b.published && <span>Media: {b.publishedBy || 'anonymous'}</span>}
                                 </div>
                             </div>
-                            <div className="flex gap-sm items-center flex-wrap">
-                                {confirming ? (
-                                    <div className="flex gap-sm items-center" role="alert">
-                                        <span style={{ fontSize: '0.8rem', color: 'var(--color-warning)' }}>
-                                            Confirm {confirmation.action} revert?
-                                        </span>
-                                        <button onClick={handleConfirmedAction} className="btn-danger" style={{ padding: '6px 10px' }}>Confirm</button>
-                                        <button onClick={() => setConfirmation(null)} className="btn-secondary" style={{ padding: '6px 10px' }}>Cancel</button>
-                                    </div>
-                                ) : (
-                                    <>
+                        </div>
+                        <div className={`balloon-admin-actions${confirming ? ' is-confirming' : ''}`}>
+                            {confirming ? (
+                                <div className="balloon-admin-confirmation" role="alert">
+                                    <span className="balloon-admin-confirmation-copy">
+                                        Confirm {confirmation.action} revert?
+                                    </span>
+                                    <button onClick={handleConfirmedAction} className="btn-danger balloon-admin-action">Confirm</button>
+                                    <button onClick={() => setConfirmation(null)} className="btn-secondary balloon-admin-action">Cancel</button>
+                                </div>
+                            ) : (
+                                <>
                                     {b.published && (
-                                    <button
-                                        onClick={() => setConfirmation({ id: b.id, action: 'publication' })}
-                                        className="btn-secondary"
-                                        style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                                    >
-                                        <FaUndo /> Revert Media
-                                    </button>
+                                        <button
+                                            onClick={() => setConfirmation({ id: b.id, action: 'publication' })}
+                                            className="btn-secondary balloon-admin-action"
+                                        >
+                                            <FaUndo /> Revert Media
+                                        </button>
                                     )}
                                     {b.delivered && (
                                         <button
                                             onClick={() => setConfirmation({ id: b.id, action: 'delivery' })}
-                                            className="btn-secondary"
-                                            style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                                            className="btn-secondary balloon-admin-action"
                                         >
                                             <FaUndo /> Revert Delivery
                                         </button>
                                     )}
                                     <button
                                         onClick={() => setConfirmation({ id: b.id, action: 'judge' })}
-                                        className="btn-danger"
-                                        style={{ padding: '6px 10px' }}
+                                        className="btn-danger balloon-admin-action"
                                     >
                                         <FaUndo /> Revert Judge Entry
                                     </button>
-                                    </>
-                                )}
-                            </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 );
