@@ -312,6 +312,25 @@ input:focus, select:focus {
   box-shadow: 0 0 0 3px rgba(244, 196, 48, 0.4);
 }
 
+.team-search {
+  position: relative;
+  margin-bottom: var(--space-sm);
+}
+
+.team-search > svg {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 14px;
+  color: var(--text-dim);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.team-search input {
+  padding-left: 42px;
+}
+
 /* ===== UTILITIES ===== */
 .container {
   max-width: 1200px;

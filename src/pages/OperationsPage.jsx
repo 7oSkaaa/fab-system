@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
-import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome } from 'react-icons/fa';
+import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome, FaSearch } from 'react-icons/fa';
 
 export const OperationsPage = () => {
     const { sites, problems, teams, balloons, addBalloon, getProblemsForSite } = useBalloonContext();
@@ -11,10 +11,17 @@ export const OperationsPage = () => {
     const [selectedSiteId, setSelectedSiteId] = useState('');
     const [selectedProblemId, setSelectedProblemId] = useState('');
     const [selectedTeamId, setSelectedTeamId] = useState('');
+    const [teamSearch, setTeamSearch] = useState('');
     const [feedback, setFeedback] = useState(null);
 
     const activeSiteId = selectedSiteId || sites[0]?.id || '';
     const siteTeams = teams.filter(t => t.siteId === activeSiteId);
+    const normalizedTeamSearch = teamSearch.trim().toLowerCase();
+    const filteredTeams = siteTeams
+        .filter(team => !normalizedTeamSearch || [team.seatNumber, team.name, team.displayName, team.university]
+            .filter(Boolean)
+            .some(value => String(value).toLowerCase().includes(normalizedTeamSearch)))
+        .sort((a, b) => String(a.seatNumber || a.name).localeCompare(String(b.seatNumber || b.name), undefined, { numeric: true }));
 
     const takenProblems = new Set();
     balloons.forEach(b => {
@@ -45,6 +52,7 @@ export const OperationsPage = () => {
         await addBalloon(selectedProblemId, selectedTeamId, activeSiteId, user?.email);
         setFeedback({ type: 'success', msg: 'Balloon Request Sent!' });
         setSelectedTeamId('');
+        setTeamSearch('');
         setSelectedProblemId('');
 
         setTimeout(() => setFeedback(null), 3000);
@@ -76,6 +84,7 @@ export const OperationsPage = () => {
                             onChange={(e) => {
                                 setSelectedSiteId(e.target.value);
                                 setSelectedTeamId('');
+                                setTeamSearch('');
                                 setSelectedProblemId('');
                             }}
                             style={{ fontSize: '1.1rem' }}
@@ -131,17 +140,37 @@ export const OperationsPage = () => {
                         {/* Team Selection */}
                         <div>
                             <label style={{ display: 'block', marginBottom: 'var(--space-sm)', color: 'var(--text-muted)', fontWeight: '600' }}>Select Team:</label>
+                            <div className="team-search">
+                                <FaSearch aria-hidden="true" />
+                                <input
+                                    type="search"
+                                    value={teamSearch}
+                                    onChange={(e) => {
+                                        setTeamSearch(e.target.value);
+                                        setSelectedTeamId('');
+                                    }}
+                                    placeholder="Search seat, team, or university"
+                                    aria-label="Search teams"
+                                    disabled={!siteTeams.length}
+                                    autoComplete="off"
+                                />
+                            </div>
                             <select
                                 value={selectedTeamId}
                                 onChange={(e) => setSelectedTeamId(e.target.value)}
-                                disabled={!siteTeams.length}
+                                disabled={!filteredTeams.length}
                             >
-                                <option value="">-- Choose Team --</option>
-                                {siteTeams.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })).map(t => (
-                                    <option key={t.id} value={t.id}>{t.displayName ? `${t.name} — ${t.displayName}` : t.name}</option>
+                                <option value="">{filteredTeams.length ? `-- Choose from ${filteredTeams.length} team${filteredTeams.length === 1 ? '' : 's'} --` : '-- No matching teams --'}</option>
+                                {filteredTeams.map(t => (
+                                    <option key={t.id} value={t.id}>
+                                        {`${t.seatNumber || t.name} — ${t.displayName || t.name}${t.university ? ` — ${t.university}` : ''}`}
+                                    </option>
                                 ))}
                             </select>
                             {siteTeams.length === 0 && <span style={{ color: 'var(--color-error)', fontSize: '0.85rem' }}>No teams for this site.</span>}
+                            {siteTeams.length > 0 && filteredTeams.length === 0 && (
+                                <span style={{ color: 'var(--color-warning)', fontSize: '0.85rem' }}>No teams match “{teamSearch}”.</span>
+                            )}
                         </div>
 
                         <button
