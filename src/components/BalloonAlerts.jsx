@@ -26,17 +26,49 @@ const playChime = async (audioContextRef) => {
     });
 };
 
+const unlockAudio = async (audioContextRef) => {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const context = audioContextRef.current || new AudioContext();
+    audioContextRef.current = context;
+    if (context.state === 'suspended') await context.resume();
+};
+
 export const BalloonAlerts = ({ balloons, teams, problems, sites, pendingField, audience }) => {
     const knownIdsRef = useRef(null);
     const audioContextRef = useRef(null);
     const timeoutRef = useRef(null);
-    const [alertsEnabled, setAlertsEnabled] = useState(false);
+    const originalTitleRef = useRef(document.title);
+    const [alertsEnabled, setAlertsEnabled] = useState(true);
+    const [notificationPermission, setNotificationPermission] = useState(
+        'Notification' in window ? Notification.permission : 'unsupported'
+    );
     const [alert, setAlert] = useState(null);
 
-    useEffect(() => () => {
-        clearTimeout(timeoutRef.current);
-        audioContextRef.current?.close();
+    useEffect(() => {
+        const originalTitle = originalTitleRef.current;
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/notification-sw.js').catch(() => {});
+        }
+
+        return () => {
+            clearTimeout(timeoutRef.current);
+            document.title = originalTitle;
+        };
     }, []);
+
+    useEffect(() => {
+        const prepareAudio = () => {
+            if (alertsEnabled) unlockAudio(audioContextRef).catch(() => {});
+        };
+        document.addEventListener('pointerdown', prepareAudio, { once: true });
+        document.addEventListener('keydown', prepareAudio, { once: true });
+
+        return () => {
+            document.removeEventListener('pointerdown', prepareAudio);
+            document.removeEventListener('keydown', prepareAudio);
+        };
+    }, [alertsEnabled]);
 
     useEffect(() => {
         const currentIds = new Set(balloons.map(balloon => balloon.id));
@@ -68,24 +100,66 @@ export const BalloonAlerts = ({ balloons, teams, problems, sites, pendingField, 
         // This effect reacts to an external Firestore arrival, so updating the alert is intentional.
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setAlert({ title, message, color: problem?.color || 'var(--color-primary)' });
+        document.title = `🎈 ${title} · FAB System`;
         clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => setAlert(null), 12000);
+        timeoutRef.current = setTimeout(() => {
+            setAlert(null);
+            document.title = originalTitleRef.current;
+        }, 10000);
 
         if (alertsEnabled) {
             playChime(audioContextRef).catch(() => {});
+            navigator.vibrate?.([250, 120, 250, 120, 400]);
         }
         if (alertsEnabled && 'Notification' in window && Notification.permission === 'granted') {
-            new Notification(title, { body: message, tag: `balloon-${newest.id}` });
+            const notificationOptions = {
+                body: message,
+                tag: `balloon-${newest.id}`,
+                icon: '/favicon.png',
+                badge: '/favicon.png',
+                requireInteraction: true,
+                renotify: true,
+                silent: false,
+                vibrate: [250, 120, 250, 120, 400],
+                timestamp: Date.now(),
+                data: { url: window.location.href },
+            };
+            try {
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready
+                        .then(registration => registration.showNotification(title, notificationOptions))
+                        .catch(() => new Notification(title, notificationOptions));
+                } else {
+                    new Notification(title, notificationOptions);
+                }
+            } catch {
+                // The in-app alert and audio remain available on browsers with limited notification options.
+            }
         }
     }, [alertsEnabled, balloons, pendingField, problems, sites, teams]);
 
     const enableAlerts = async () => {
         if ('Notification' in window && Notification.permission === 'default') {
-            await Notification.requestPermission();
+            const permission = await Notification.requestPermission();
+            setNotificationPermission(permission);
         }
         await playChime(audioContextRef).catch(() => {});
         setAlertsEnabled(true);
     };
+
+    const handleAlertControl = () => {
+        if (!alertsEnabled || notificationPermission === 'default') {
+            enableAlerts();
+            return;
+        }
+        setAlertsEnabled(false);
+    };
+
+    const buttonLabel = !alertsEnabled
+        ? 'Enable alerts'
+        : notificationPermission === 'default'
+            ? 'Allow background alerts'
+            : 'Alerts on';
 
     return (
         <>
@@ -93,11 +167,11 @@ export const BalloonAlerts = ({ balloons, teams, problems, sites, pendingField, 
                 <button
                     type="button"
                     className={alertsEnabled ? 'alerts-button enabled' : 'alerts-button'}
-                    onClick={alertsEnabled ? () => setAlertsEnabled(false) : enableAlerts}
+                    onClick={handleAlertControl}
                     aria-pressed={alertsEnabled}
                 >
                     {alertsEnabled ? <FaBell aria-hidden="true" /> : <FaBellSlash aria-hidden="true" />}
-                    {alertsEnabled ? 'Alerts on' : 'Enable alerts'}
+                    {buttonLabel}
                 </button>
             </div>
 
@@ -108,7 +182,10 @@ export const BalloonAlerts = ({ balloons, teams, problems, sites, pendingField, 
                         <strong>{alert.title}</strong>
                         <span>{alert.message}</span>
                     </div>
-                    <button type="button" onClick={() => setAlert(null)} aria-label="Dismiss notification">
+                    <button type="button" onClick={() => {
+                        setAlert(null);
+                        document.title = originalTitleRef.current;
+                    }} aria-label="Dismiss notification">
                         <FaTimes />
                     </button>
                 </div>

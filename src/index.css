@@ -136,7 +136,7 @@ body {
 
 .balloon-alert {
   position: fixed;
-  z-index: 1100;
+  z-index: 2147483647;
   right: 20px;
   bottom: 20px;
   display: grid;
