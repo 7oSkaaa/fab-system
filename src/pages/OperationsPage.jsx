@@ -221,9 +221,12 @@ export const OperationsPage = () => {
                                                 onMouseEnter={() => setActiveTeamIndex(index)}
                                                 onClick={() => selectTeam(team)}
                                             >
-                                                <strong>Seat {team.seatNumber || team.name}</strong>
-                                                <span>{team.displayName || team.name}</span>
-                                                {team.university && <small>{team.university}</small>}
+                                                <strong className="team-option-seat">
+                                                    <span>Seat</span>
+                                                    {team.seatNumber || team.name}
+                                                </strong>
+                                                <span className="team-option-name">{team.displayName || team.name}</span>
+                                                {team.university && <small className="team-option-university">{team.university}</small>}
                                             </button>
                                         )) : (
                                             <div className="team-option-empty">No teams match “{teamSearch}”.</div>

@@ -314,31 +314,50 @@ input:focus, select:focus {
 
 .team-combobox {
   position: relative;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 40px;
+  align-items: center;
+  overflow: hidden;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .team-combobox > svg {
-  position: absolute;
-  z-index: 1;
-  top: 50%;
-  left: 14px;
+  position: static;
+  justify-self: end;
   color: var(--text-dim);
   pointer-events: none;
-  transform: translateY(-50%);
 }
 
 .team-combobox input {
-  padding: 12px 44px 12px 42px;
-  font-size: 0.95rem;
+  min-width: 0;
+  padding: 11px 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: clamp(0.8rem, 2vw, 0.92rem);
+  box-shadow: none;
+}
+
+.team-combobox:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(244, 196, 48, 0.28);
+}
+
+.team-combobox input:focus,
+.team-combobox input:hover {
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .team-combobox-toggle {
-  position: absolute;
-  top: 5px;
-  right: 5px;
+  position: static;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
 }
@@ -349,55 +368,74 @@ input:focus, select:focus {
 }
 
 .team-options {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 6px);
-  right: 0;
-  left: 0;
-  max-height: min(320px, 42vh);
+  position: relative;
+  z-index: 1;
+  grid-column: 1 / -1;
+  max-height: min(390px, 52vh);
   overflow-y: auto;
-  padding: 6px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--bg-card);
-  box-shadow: var(--shadow-md);
+  padding: 5px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-base);
+  scrollbar-color: var(--color-primary) transparent;
+  scrollbar-width: thin;
 }
 
 .team-option {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: 76px minmax(0, 1fr);
   width: 100%;
-  gap: 1px 10px;
-  min-height: 58px;
-  padding: 7px 10px;
+  gap: 2px 12px;
+  min-height: 54px;
+  padding: 6px 9px;
   border-radius: var(--radius-sm);
   text-align: left;
 }
 
-.team-option strong {
+.team-option-seat {
   grid-row: 1 / span 2;
   align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 4px 8px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 55%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
   color: var(--color-primary);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
+  line-height: 1.05;
 }
 
-.team-option span,
-.team-option small {
+.team-option-seat span {
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.team-option-name,
+.team-option-university {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.team-option span {
-  font-size: 0.9rem;
+.team-option-name {
+  align-self: end;
+  font-size: 0.84rem;
   font-weight: 700;
 }
 
-.team-option small {
+.team-option-university {
+  align-self: start;
   color: var(--text-muted);
-  font-size: 0.76rem;
+  font-size: 0.68rem;
 }
 
 .team-option:hover,
@@ -751,20 +789,27 @@ input:focus, select:focus {
   }
 
   .team-combobox input {
-    font-size: 0.85rem;
+    padding: 10px 8px;
+    font-size: 0.78rem;
   }
 
   .team-options {
-    max-height: min(300px, 45vh);
+    max-height: min(360px, 55vh);
   }
 
   .team-option {
-    min-height: 52px;
-    padding: 6px 8px;
+    grid-template-columns: 68px minmax(0, 1fr);
+    min-height: 50px;
+    gap: 1px 9px;
+    padding: 5px 7px;
   }
 
-  .team-option span {
-    font-size: 0.84rem;
+  .team-option-name {
+    font-size: 0.78rem;
+  }
+
+  .team-option-university {
+    font-size: 0.64rem;
   }
 
   .alert-controls {
