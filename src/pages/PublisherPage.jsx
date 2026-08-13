@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
+import { BalloonAlerts } from '../components/BalloonAlerts';
 import { FaBoxOpen, FaClock, FaBullhorn, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity } from 'react-icons/fa';
 
 const isInAppBrowser = () => {
@@ -50,6 +51,14 @@ export const PublisherPage = () => {
 
     return (
         <div className="container" style={{ paddingTop: 'var(--space-lg)', paddingBottom: 'var(--space-xl)' }}>
+            <BalloonAlerts
+                balloons={balloons}
+                teams={teams}
+                problems={problems}
+                sites={sites}
+                pendingField="published"
+                audience="Media"
+            />
             <header className="page-header flex justify-between items-center flex-wrap gap-md">
                 <div className="page-title">
                     <h1 className="page-title-main">📢 Balloon Publisher</h1>

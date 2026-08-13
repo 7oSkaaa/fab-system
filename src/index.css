@@ -99,6 +99,109 @@ body {
   font-size: 1rem;
 }
 
+/* ===== REAL-TIME BALLOON ALERTS ===== */
+.alert-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-sm);
+}
+
+.alerts-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 13px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.8rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.alerts-button:hover,
+.alerts-button.enabled {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--bg-elevated);
+}
+
+.alerts-button:focus-visible,
+.balloon-alert button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
+  outline-offset: 3px;
+}
+
+.balloon-alert {
+  position: fixed;
+  z-index: 1100;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: min(440px, calc(100vw - 32px));
+  padding: 14px 14px 14px 16px;
+  border: 1px solid var(--border-color);
+  border-left: 6px solid var(--alert-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  color: var(--text-main);
+  box-shadow: 0 20px 55px rgba(2, 20, 54, 0.28);
+  animation: alert-arrival 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.balloon-alert-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  font-size: 1.35rem;
+}
+
+.balloon-alert-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.balloon-alert-copy strong {
+  font-size: 0.95rem;
+}
+
+.balloon-alert-copy span {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.balloon-alert button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--text-dim);
+}
+
+.balloon-alert button:hover {
+  background: var(--bg-hover);
+  color: var(--text-main);
+}
+
+@keyframes alert-arrival {
+  from { opacity: 0; transform: translateY(18px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
@@ -448,6 +551,12 @@ input:focus, select:focus {
 
   .theme-toggle-label {
     display: none;
+  }
+
+  .balloon-alert {
+    right: 12px;
+    bottom: 12px;
+    width: calc(100vw - 24px);
   }
 
   .container {

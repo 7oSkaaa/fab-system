@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
+import { BalloonAlerts } from '../components/BalloonAlerts';
 import { FaBoxOpen, FaClock, FaCheck, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity } from 'react-icons/fa';
 
 const isInAppBrowser = () => {
@@ -53,6 +54,14 @@ export const VolunteerPage = () => {
 
     return (
         <div className="container" style={{ paddingTop: 'var(--space-lg)', paddingBottom: 'var(--space-xl)' }}>
+            <BalloonAlerts
+                balloons={balloons}
+                teams={teams}
+                problems={problems}
+                sites={sites}
+                pendingField="delivered"
+                audience="Volunteer"
+            />
             <header className="page-header flex justify-between items-center flex-wrap gap-md">
                 <div className="page-title">
                     <h1 className="page-title-main">🚀 Balloon Delivery</h1>
