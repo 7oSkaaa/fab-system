@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
-import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome, FaSearch } from 'react-icons/fa';
+import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome, FaSearch, FaChevronDown } from 'react-icons/fa';
+
+const getTeamLabel = team => `${team.seatNumber || team.name} — ${team.displayName || team.name}${team.university ? ` — ${team.university}` : ''}`;
 
 export const OperationsPage = () => {
     const { sites, problems, teams, balloons, addBalloon, getProblemsForSite } = useBalloonContext();
@@ -12,7 +14,10 @@ export const OperationsPage = () => {
     const [selectedProblemId, setSelectedProblemId] = useState('');
     const [selectedTeamId, setSelectedTeamId] = useState('');
     const [teamSearch, setTeamSearch] = useState('');
+    const [teamMenuOpen, setTeamMenuOpen] = useState(false);
+    const [activeTeamIndex, setActiveTeamIndex] = useState(0);
     const [feedback, setFeedback] = useState(null);
+    const teamPickerRef = useRef(null);
 
     const activeSiteId = selectedSiteId || sites[0]?.id || '';
     const siteTeams = teams.filter(t => t.siteId === activeSiteId);
@@ -22,6 +27,29 @@ export const OperationsPage = () => {
             .filter(Boolean)
             .some(value => String(value).toLowerCase().includes(normalizedTeamSearch)))
         .sort((a, b) => String(a.seatNumber || a.name).localeCompare(String(b.seatNumber || b.name), undefined, { numeric: true }));
+
+    const selectTeam = team => {
+        setSelectedTeamId(team.id);
+        setTeamSearch(getTeamLabel(team));
+        setTeamMenuOpen(false);
+    };
+
+    const handleTeamKeyDown = event => {
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            setTeamMenuOpen(true);
+            if (filteredTeams.length === 0) return;
+            setActiveTeamIndex(current => {
+                const direction = event.key === 'ArrowDown' ? 1 : -1;
+                return (current + direction + filteredTeams.length) % filteredTeams.length;
+            });
+        } else if (event.key === 'Enter' && teamMenuOpen && filteredTeams[activeTeamIndex]) {
+            event.preventDefault();
+            selectTeam(filteredTeams[activeTeamIndex]);
+        } else if (event.key === 'Escape') {
+            setTeamMenuOpen(false);
+        }
+    };
 
     const takenProblems = new Set();
     balloons.forEach(b => {
@@ -53,6 +81,7 @@ export const OperationsPage = () => {
         setFeedback({ type: 'success', msg: 'Balloon Request Sent!' });
         setSelectedTeamId('');
         setTeamSearch('');
+        setTeamMenuOpen(false);
         setSelectedProblemId('');
 
         setTimeout(() => setFeedback(null), 3000);
@@ -85,6 +114,7 @@ export const OperationsPage = () => {
                                 setSelectedSiteId(e.target.value);
                                 setSelectedTeamId('');
                                 setTeamSearch('');
+                                setTeamMenuOpen(false);
                                 setSelectedProblemId('');
                             }}
                             style={{ fontSize: '1.1rem' }}
@@ -140,7 +170,13 @@ export const OperationsPage = () => {
                         {/* Team Selection */}
                         <div>
                             <label style={{ display: 'block', marginBottom: 'var(--space-sm)', color: 'var(--text-muted)', fontWeight: '600' }}>Select Team:</label>
-                            <div className="team-search">
+                            <div
+                                className="team-combobox"
+                                ref={teamPickerRef}
+                                onBlur={(event) => {
+                                    if (!event.currentTarget.contains(event.relatedTarget)) setTeamMenuOpen(false);
+                                }}
+                            >
                                 <FaSearch aria-hidden="true" />
                                 <input
                                     type="search"
@@ -148,29 +184,54 @@ export const OperationsPage = () => {
                                     onChange={(e) => {
                                         setTeamSearch(e.target.value);
                                         setSelectedTeamId('');
+                                        setActiveTeamIndex(0);
+                                        setTeamMenuOpen(true);
                                     }}
+                                    onFocus={() => setTeamMenuOpen(true)}
+                                    onKeyDown={handleTeamKeyDown}
                                     placeholder="Search seat, team, or university"
-                                    aria-label="Search teams"
+                                    role="combobox"
+                                    aria-label="Search and select team"
+                                    aria-expanded={teamMenuOpen}
+                                    aria-controls="team-options"
+                                    aria-autocomplete="list"
                                     disabled={!siteTeams.length}
                                     autoComplete="off"
                                 />
+                                <button
+                                    type="button"
+                                    className="team-combobox-toggle"
+                                    onClick={() => setTeamMenuOpen(open => !open)}
+                                    aria-label="Toggle team options"
+                                    tabIndex={-1}
+                                    disabled={!siteTeams.length}
+                                >
+                                    <FaChevronDown />
+                                </button>
+                                {teamMenuOpen && (
+                                    <div className="team-options" id="team-options" role="listbox">
+                                        {filteredTeams.length ? filteredTeams.map((team, index) => (
+                                            <button
+                                                type="button"
+                                                key={team.id}
+                                                role="option"
+                                                aria-selected={selectedTeamId === team.id}
+                                                className={index === activeTeamIndex ? 'team-option active' : 'team-option'}
+                                                onMouseDown={(event) => event.preventDefault()}
+                                                onMouseEnter={() => setActiveTeamIndex(index)}
+                                                onClick={() => selectTeam(team)}
+                                            >
+                                                <strong>Seat {team.seatNumber || team.name}</strong>
+                                                <span>{team.displayName || team.name}</span>
+                                                {team.university && <small>{team.university}</small>}
+                                            </button>
+                                        )) : (
+                                            <div className="team-option-empty">No teams match “{teamSearch}”.</div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                            <select
-                                value={selectedTeamId}
-                                onChange={(e) => setSelectedTeamId(e.target.value)}
-                                disabled={!filteredTeams.length}
-                            >
-                                <option value="">{filteredTeams.length ? `-- Choose from ${filteredTeams.length} team${filteredTeams.length === 1 ? '' : 's'} --` : '-- No matching teams --'}</option>
-                                {filteredTeams.map(t => (
-                                    <option key={t.id} value={t.id}>
-                                        {`${t.seatNumber || t.name} — ${t.displayName || t.name}${t.university ? ` — ${t.university}` : ''}`}
-                                    </option>
-                                ))}
-                            </select>
                             {siteTeams.length === 0 && <span style={{ color: 'var(--color-error)', fontSize: '0.85rem' }}>No teams for this site.</span>}
-                            {siteTeams.length > 0 && filteredTeams.length === 0 && (
-                                <span style={{ color: 'var(--color-warning)', fontSize: '0.85rem' }}>No teams match “{teamSearch}”.</span>
-                            )}
                         </div>
 
                         <button
