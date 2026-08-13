@@ -6,7 +6,7 @@ export default async function handler(request, response) {
     if (request.method !== 'POST') return response.status(405).json({ error: 'Method not allowed.' });
 
     const { token, audience, userAgent } = request.body || {};
-    if (typeof token !== 'string' || token.length < 40 || !['volunteer', 'media'].includes(audience)) {
+    if (typeof token !== 'string' || token.length < 40 || !['volunteer', 'media', 'operations'].includes(audience)) {
         return response.status(400).json({ error: 'Invalid push subscription.' });
     }
 

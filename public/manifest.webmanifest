@@ -3,7 +3,7 @@
   "name": "FAB System",
   "short_name": "FAB",
   "description": "First Accepted Balloon operations for ICPC contests.",
-  "start_url": "/volunteer",
+  "start_url": "/operations",
   "scope": "/",
   "display": "standalone",
   "background_color": "#07152d",

@@ -37,11 +37,8 @@ const HomePage = () => (
         <Link to="/ops" className="btn-menu">
           🔑 <span>Judge / Staff Entry</span>
         </Link>
-        <Link to="/volunteer" className="btn-menu">
-          🚀 <span>Volunteer Dashboard</span>
-        </Link>
-        <Link to="/publisher" className="btn-menu">
-          📢 <span>Publisher Dashboard</span>
+        <Link to="/operations" className="btn-menu">
+          🎈 <span>Balloon Operations</span>
         </Link>
         <Link to="/public" className="btn-menu">
           📺 <span>Public Display</span>
@@ -126,6 +123,7 @@ const AppContent = () => {
           {/* Volunteer is PUBLIC - no login required */}
           <Route path="/volunteer" element={<VolunteerPage />} />
           <Route path="/publisher" element={<PublisherPage />} />
+          <Route path="/operations" element={<VolunteerPage />} />
           <Route path="/public" element={<PublicPage />} />
         </Routes>
       </main>

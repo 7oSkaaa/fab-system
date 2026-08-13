@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
 import { BalloonAlerts } from '../components/BalloonAlerts';
-import { FaBoxOpen, FaClock, FaCheck, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity } from 'react-icons/fa';
+import { FaBoxOpen, FaClock, FaCheck, FaBullhorn, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity } from 'react-icons/fa';
 
 const isInAppBrowser = () => {
     const ua = navigator.userAgent;
@@ -12,7 +12,7 @@ const isInAppBrowser = () => {
 };
 
 export const VolunteerPage = () => {
-    const { balloons, teams, sites, problems, markDelivered } = useBalloonContext();
+    const { balloons, teams, sites, problems, markDelivered, markPublished } = useBalloonContext();
     const { user, loginWithGoogle, logout } = useAuth();
     const [selectedSiteId, setSelectedSiteId] = useState('all');
     const [loggingIn, setLoggingIn] = useState(false);
@@ -31,8 +31,8 @@ export const VolunteerPage = () => {
     const getTeam = (id) => teams.find(t => t.id === id);
     const getSite = (id) => sites.find(s => s.id === id);
 
-    // Filter undelivered balloons (independent of published state)
-    let pendingBalloons = balloons.filter(b => !b.delivered);
+    // Keep the ticket visible until both delivery and publication are complete.
+    let pendingBalloons = balloons.filter(b => !b.delivered || !b.published);
 
     // Apply site filter
     if (selectedSiteId !== 'all') {
@@ -46,6 +46,10 @@ export const VolunteerPage = () => {
         markDelivered(id, user?.email);
     };
 
+    const handlePublish = (id) => {
+        markPublished(id, user?.email);
+    };
+
     const handleGoogleLogin = async () => {
         setLoggingIn(true);
         await loginWithGoogle();
@@ -55,11 +59,11 @@ export const VolunteerPage = () => {
     return (
         <div className="container" style={{ paddingTop: 'var(--space-lg)', paddingBottom: 'var(--space-xl)' }}>
             <BalloonAlerts
-                audience="Volunteer"
+                audience="Operations"
             />
             <header className="page-header flex justify-between items-center flex-wrap gap-md">
                 <div className="page-title">
-                    <h1 className="page-title-main">🚀 Balloon Delivery</h1>
+                    <h1 className="page-title-main">🎈 Balloon Operations</h1>
                     <p className="page-title-sub" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         {pendingBalloons.length} Pending
                         <span style={{
@@ -108,7 +112,7 @@ export const VolunteerPage = () => {
                     </div>
                 ) : (
                     <div className="flex justify-between items-center flex-wrap gap-sm">
-                        <span style={{ color: 'var(--text-muted)' }}>Sign in to track your deliveries</span>
+                        <span style={{ color: 'var(--text-muted)' }}>Sign in to track deliveries and publications</span>
                         <button onClick={handleGoogleLogin} className="btn-primary" disabled={loggingIn} style={{ padding: '6px 16px' }}>
                             <FaGoogle /> {loggingIn ? 'Signing in...' : 'Sign in with Google'}
                         </button>
@@ -142,7 +146,7 @@ export const VolunteerPage = () => {
                     <FaBoxOpen size={48} style={{ color: 'var(--text-dim)', marginBottom: 'var(--space-md)' }} />
                     <h3 style={{ color: 'var(--text-muted)' }}>All Caught Up!</h3>
                     <p style={{ color: 'var(--text-dim)' }}>
-                        {selectedSiteId === 'all' ? 'No pending balloons to deliver.' : 'No pending balloons for this site.'}
+                        {selectedSiteId === 'all' ? 'No balloons waiting for delivery or publication.' : 'No pending balloons for this site.'}
                     </p>
                 </div>
             ) : (
@@ -160,13 +164,9 @@ export const VolunteerPage = () => {
                             }}>
                                 <div className="ticket-details">
                                     <div className="ticket-team-details">
-                                        <h2 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                        <div className="seat-number">Seat {team?.seatNumber || team?.name || '?'}</div>
+                                        <h2 style={{ margin: '6px 0 0', fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                             {team ? (team.displayName || team.name) : 'Unknown Team'}
-                                            {team?.displayName && (
-                                                <span style={{ fontSize: '0.7rem', fontWeight: '400', color: 'var(--text-dim)', background: 'var(--bg-elevated)', padding: '2px 7px', borderRadius: 'var(--radius-full)', fontFamily: 'monospace' }}>
-                                                    {team.name}
-                                                </span>
-                                            )}
                                         </h2>
                                         <div style={{ display: 'inline-block', marginTop: '6px', padding: '2px 8px', borderRadius: 'var(--radius-full)', background: 'var(--bg-elevated)', color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: '600' }}>
                                             Site: {site ? site.name : 'Unknown'}
@@ -195,13 +195,22 @@ export const VolunteerPage = () => {
                                     </div>
                                 </div>
 
-                                <button
-                                    onClick={() => handleDeliver(b.id)}
-                                    className="btn-primary"
-                                    style={{ width: '100%', marginTop: 'var(--space-md)', background: 'var(--color-success)', borderColor: 'var(--color-success)' }}
-                                >
-                                    <FaCheck /> Mark Delivered
-                                </button>
+                                <div className="ticket-actions">
+                                    <button
+                                        onClick={() => handleDeliver(b.id)}
+                                        className={b.delivered ? 'ticket-action completed' : 'ticket-action deliver'}
+                                        disabled={b.delivered}
+                                    >
+                                        <FaCheck /> {b.delivered ? 'Delivered' : 'Mark Delivered'}
+                                    </button>
+                                    <button
+                                        onClick={() => handlePublish(b.id)}
+                                        className={b.published ? 'ticket-action completed' : 'ticket-action publish'}
+                                        disabled={b.published}
+                                    >
+                                        <FaBullhorn /> {b.published ? 'Published' : 'Mark Published'}
+                                    </button>
+                                </div>
                             </div>
                         );
                     })}

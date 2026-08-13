@@ -30,7 +30,7 @@ A cool, "First Accepted" balloon tracking system for CPC competitions.
 4.  **Usage**:
     - Navigate to `/admin` first to set up Sites, Teams, and Problems.
     - Open `/ops` on Judge computers.
-    - Open `/volunteer` on Runner mobile devices.
+    - Open `/operations` on Volunteer and Media mobile devices.
     - Display `/public` on the main hall screen.
     - On iPhone/iPad, use **Share → Add to Home Screen**, open FAB from its Home Screen icon, and tap **Enable background alerts**. iOS only permits Web Push for installed Home Screen web apps.
 

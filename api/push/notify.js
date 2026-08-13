@@ -51,7 +51,7 @@ export default async function handler(request, response) {
         const host = request.headers['x-forwarded-host'] || request.headers.host;
         const origin = `${protocol}://${host}`;
 
-        for (const audience of ['volunteer', 'media']) {
+        for (const audience of ['volunteer', 'media', 'operations']) {
             const group = subscriptions.filter(subscription => subscription.preferredAudience === audience && subscription.token);
             for (let start = 0; start < group.length; start += 500) {
                 const batch = group.slice(start, start + 500);
@@ -69,7 +69,7 @@ export default async function handler(request, response) {
                             tag: `balloon-${balloonId}`,
                             vibrate: [250, 120, 250, 120, 400],
                         },
-                        fcmOptions: { link: `${origin}${audience === 'media' ? '/publisher' : '/volunteer'}` },
+                        fcmOptions: { link: `${origin}/operations` },
                     },
                 });
                 const invalidSubscriptions = result.responses
