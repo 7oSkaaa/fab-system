@@ -13,6 +13,7 @@ export const PublicPage = () => {
     const visibleSites = activeSiteId === 'all'
         ? sites
         : sites.filter(site => site.id === activeSiteId);
+    const siteAccents = ['var(--color-primary)', 'var(--color-secondary)', 'var(--color-accent)'];
 
     const siteGroups = visibleSites.map(site => {
         let siteTeams = teams.filter(t => t.siteId === site.id);
@@ -46,24 +47,40 @@ export const PublicPage = () => {
             </header>
 
             {sites.length > 1 && (
-                <div className="card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-md)' }}>
-                    <div className="flex items-center gap-md flex-wrap">
-                        <label htmlFor="scoreboard-site-filter" className="flex items-center gap-sm" style={{ color: 'var(--text-muted)', fontWeight: '600' }}>
-                            <FaFilter /> Filter by site
-                        </label>
-                        <select
-                            id="scoreboard-site-filter"
-                            value={activeSiteId}
-                            onChange={(event) => setSelectedSiteId(event.target.value)}
-                            style={{ minWidth: '200px', flex: 1, maxWidth: '320px' }}
-                        >
-                            <option value="all">All Sites</option>
-                            {sites.map(site => (
-                                <option key={site.id} value={site.id}>{site.name}</option>
-                            ))}
-                        </select>
+                <section className="scoreboard-site-switcher" aria-labelledby="scoreboard-site-filter-label">
+                    <div className="scoreboard-site-switcher-heading">
+                        <span id="scoreboard-site-filter-label"><FaFilter /> Contest sites</span>
+                        <small>Choose a site to focus the scoreboard</small>
                     </div>
-                </div>
+                    <div className="scoreboard-site-buttons" role="group" aria-label="Filter scoreboard by site">
+                        <button
+                            type="button"
+                            className={`scoreboard-site-button all-sites ${activeSiteId === 'all' ? 'active' : ''}`}
+                            style={{ '--site-accent': 'var(--color-accent)' }}
+                            aria-pressed={activeSiteId === 'all'}
+                            onClick={() => setSelectedSiteId('all')}
+                        >
+                            <span className="scoreboard-site-name"><i aria-hidden="true" /> All sites</span>
+                            <small>{sites.length} sites · {teams.length} teams</small>
+                        </button>
+                        {sites.map((site, index) => {
+                            const teamCount = teams.filter(team => team.siteId === site.id).length;
+                            return (
+                                <button
+                                    type="button"
+                                    key={site.id}
+                                    className={`scoreboard-site-button ${activeSiteId === site.id ? 'active' : ''}`}
+                                    style={{ '--site-accent': siteAccents[index % siteAccents.length] }}
+                                    aria-pressed={activeSiteId === site.id}
+                                    onClick={() => setSelectedSiteId(site.id)}
+                                >
+                                    <span className="scoreboard-site-name"><i aria-hidden="true" /> {site.name}</span>
+                                    <small>{teamCount} {teamCount === 1 ? 'team' : 'teams'}</small>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </section>
             )}
 
             {/* Content */}

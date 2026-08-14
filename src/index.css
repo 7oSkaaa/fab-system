@@ -722,6 +722,130 @@ input:focus, select:focus {
   box-shadow: var(--shadow-glow);
 }
 
+/* ===== SCOREBOARD SITE SWITCHER ===== */
+.scoreboard-site-switcher {
+  position: relative;
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  background: color-mix(in srgb, var(--bg-card) 92%, transparent);
+  box-shadow: var(--shadow-sm);
+}
+
+.scoreboard-site-switcher::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary) 0 50%, var(--color-secondary) 50% 75%, var(--color-accent) 75%);
+}
+
+.scoreboard-site-switcher-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: 12px;
+}
+
+.scoreboard-site-switcher-heading span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.scoreboard-site-switcher-heading span svg {
+  color: var(--color-primary);
+}
+
+.scoreboard-site-switcher-heading small {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
+
+.scoreboard-site-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.scoreboard-site-button {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  padding: 10px 12px 10px 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text-main);
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.scoreboard-site-button::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: var(--site-accent);
+}
+
+.scoreboard-site-button:hover {
+  transform: translateY(-2px);
+  border-color: var(--site-accent);
+  background: var(--bg-hover);
+}
+
+.scoreboard-site-button.active {
+  transform: translateY(-2px);
+  border-color: var(--site-accent);
+  background: color-mix(in srgb, var(--site-accent) 12%, var(--bg-card));
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--site-accent) 18%, transparent);
+}
+
+.scoreboard-site-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--site-accent) 40%, transparent);
+  outline-offset: 2px;
+}
+
+.scoreboard-site-name {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scoreboard-site-name i {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--site-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--site-accent) 16%, transparent);
+}
+
+.scoreboard-site-button small {
+  padding-left: 14px;
+  color: var(--text-muted);
+  font-size: 0.66rem;
+  font-weight: 600;
+}
+
 /* ===== BALLOON GRID ===== */
 .balloon-grid {
   display: grid;
@@ -874,6 +998,31 @@ input:focus, select:focus {
 
   .container {
     padding: var(--space-xs);
+  }
+
+  .scoreboard-site-switcher {
+    padding: 12px 8px 8px;
+    border-radius: var(--radius-lg);
+  }
+
+  .scoreboard-site-switcher-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 1px;
+    padding: 0 4px;
+  }
+
+  .scoreboard-site-buttons {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+
+  .scoreboard-site-button {
+    padding: 9px 8px 9px 12px;
+  }
+
+  .scoreboard-site-name {
+    font-size: 0.75rem;
   }
   
   .card, .glass-panel, .page-header {
