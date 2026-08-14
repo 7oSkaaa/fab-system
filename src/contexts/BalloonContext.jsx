@@ -185,6 +185,25 @@ export const BalloonProvider = ({ children }) => {
         await deleteDoc(doc(db, 'teams', id));
     };
 
+    const removeTeamsFromSite = async (siteId) => {
+        if (!siteId) throw new Error('Select a site before removing teams.');
+
+        const [teamSnapshot, balloonSnapshot] = await Promise.all([
+            getDocs(query(collection(db, 'teams'), where('siteId', '==', siteId))),
+            getDocs(query(collection(db, 'balloons'), where('siteId', '==', siteId))),
+        ]);
+
+        await Promise.all([
+            deleteDocumentsInBatches(teamSnapshot.docs),
+            deleteDocumentsInBatches(balloonSnapshot.docs),
+        ]);
+
+        return {
+            removedTeams: teamSnapshot.size,
+            removedBalloons: balloonSnapshot.size,
+        };
+    };
+
     // Problems
     const addProblem = async (name, color, siteId = null, colorName = '', details = {}) => {
         const scopedProblems = problems.filter(problem => siteId === null
@@ -364,7 +383,7 @@ export const BalloonProvider = ({ children }) => {
     return (
         <BalloonContext.Provider value={{
             sites, addSite, updateSite, removeSite, reorderSites,
-            teams, addTeams, addTeamsFromTsv, removeTeam,
+            teams, addTeams, addTeamsFromTsv, removeTeam, removeTeamsFromSite,
             problems, addProblem, addProblemsFromConfig, updateProblem, removeProblem, copyProblemsToSite, getProblemsForSite,
             balloons, addBalloon, markDelivered, markPublished, revertDelivery, revertPublication, deleteBalloon, resetBalloons,
             resetData,

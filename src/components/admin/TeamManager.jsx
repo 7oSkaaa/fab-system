@@ -4,13 +4,14 @@ import { FaFileAlt, FaTrash, FaUsers } from 'react-icons/fa';
 import { parseTeamTsv } from '../../utils/teamTsv';
 
 export const TeamManager = () => {
-    const { sites, teams, addTeams, addTeamsFromTsv, removeTeam } = useBalloonContext();
+    const { sites, teams, balloons, addTeams, addTeamsFromTsv, removeTeam, removeTeamsFromSite } = useBalloonContext();
     const [bulkPrefix, setBulkPrefix] = useState('Team ');
     const [startId, setStartId] = useState(1);
     const [endId, setEndId] = useState(10);
     const [selectedSiteId, setSelectedSiteId] = useState('');
     const [importStatus, setImportStatus] = useState(null);
     const [isImporting, setIsImporting] = useState(false);
+    const [removingSiteId, setRemovingSiteId] = useState(null);
     const [fileInputKey, setFileInputKey] = useState(0);
 
     React.useEffect(() => {
@@ -53,6 +54,29 @@ export const TeamManager = () => {
         } finally {
             setIsImporting(false);
             setFileInputKey(key => key + 1);
+        }
+    };
+
+    const handleRemoveAllTeams = async (site, siteTeams) => {
+        const relatedBalloons = balloons.filter(balloon => balloon.siteId === site.id).length;
+        const balloonWarning = relatedBalloons
+            ? ` This will also remove ${relatedBalloons} balloon record${relatedBalloons === 1 ? '' : 's'} for this site.`
+            : '';
+
+        if (!confirm(`Remove all ${siteTeams.length} teams from "${site.name}"?${balloonWarning} This cannot be undone.`)) return;
+
+        setRemovingSiteId(site.id);
+        setImportStatus(null);
+        try {
+            const result = await removeTeamsFromSite(site.id);
+            setImportStatus({
+                type: 'success',
+                message: `Removed ${result.removedTeams} team${result.removedTeams === 1 ? '' : 's'} from ${site.name}${result.removedBalloons ? ` and cleared ${result.removedBalloons} balloon record${result.removedBalloons === 1 ? '' : 's'}` : ''}.`,
+            });
+        } catch (error) {
+            setImportStatus({ type: 'error', message: error instanceof Error ? error.message : 'Could not remove the teams.' });
+        } finally {
+            setRemovingSiteId(null);
         }
     };
 
@@ -143,6 +167,17 @@ export const TeamManager = () => {
                                         <FaUsers /> {site.name}
                                         <span style={{ fontSize: '0.8em', color: 'var(--text-muted)', marginLeft: 'auto' }}>({siteTeams.length})</span>
                                     </h4>
+                                    {siteTeams.length > 0 && (
+                                        <button
+                                            type="button"
+                                            className="btn-danger"
+                                            onClick={() => handleRemoveAllTeams(site, siteTeams)}
+                                            disabled={removingSiteId !== null}
+                                            style={{ width: '100%', marginBottom: '0.75rem', padding: '8px 10px', fontSize: '0.8rem' }}
+                                        >
+                                            <FaTrash /> {removingSiteId === site.id ? 'Removing…' : `Remove all ${siteTeams.length} teams`}
+                                        </button>
+                                    )}
                                     <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
                                         {siteTeams.length === 0 && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No teams</span>}
                                         {siteTeams.map(team => (
