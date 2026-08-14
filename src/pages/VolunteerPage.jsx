@@ -11,6 +11,14 @@ const isInAppBrowser = () => {
         (/iPhone|iPod|iPad/.test(ua) && !/Safari/.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua));
 };
 
+const sortByDeliveryPriority = (firstBalloon, secondBalloon) => {
+    const deliveryPriority = Number(firstBalloon.delivered) - Number(secondBalloon.delivered);
+    if (deliveryPriority !== 0) return deliveryPriority;
+
+    return (firstBalloon.timestamp ?? Number.MAX_SAFE_INTEGER) -
+        (secondBalloon.timestamp ?? Number.MAX_SAFE_INTEGER);
+};
+
 export const VolunteerPage = () => {
     const { balloons, teams, sites, problems, markDelivered, markPublished } = useBalloonContext();
     const { user, loginWithGoogle, logout } = useAuth();
@@ -39,8 +47,8 @@ export const VolunteerPage = () => {
         pendingBalloons = pendingBalloons.filter(b => b.siteId === selectedSiteId);
     }
 
-    // Sort by timestamp
-    pendingBalloons.sort((a, b) => a.timestamp - b.timestamp);
+    // Undelivered balloons are urgent; within each group, handle the oldest first.
+    pendingBalloons.sort(sortByDeliveryPriority);
 
     const handleDeliver = (id) => {
         markDelivered(id, user?.email);
