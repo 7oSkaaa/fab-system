@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
-import { FaTrophy, FaHome } from 'react-icons/fa';
+import { FaTrophy, FaHome, FaFilter } from 'react-icons/fa';
 
 export const PublicPage = () => {
     const { balloons, teams, sites, getProblemsForSite } = useBalloonContext();
+    const [selectedSiteId, setSelectedSiteId] = useState('all');
+    const activeSiteId = selectedSiteId === 'all' || sites.some(site => site.id === selectedSiteId)
+        ? selectedSiteId
+        : 'all';
 
-    const siteGroups = sites.map(site => {
+    const visibleSites = activeSiteId === 'all'
+        ? sites
+        : sites.filter(site => site.id === activeSiteId);
+
+    const siteGroups = visibleSites.map(site => {
         let siteTeams = teams.filter(t => t.siteId === site.id);
         siteTeams.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
@@ -36,6 +44,27 @@ export const PublicPage = () => {
                     <FaHome /> Home
                 </Link>
             </header>
+
+            {sites.length > 1 && (
+                <div className="card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-md)' }}>
+                    <div className="flex items-center gap-md flex-wrap">
+                        <label htmlFor="scoreboard-site-filter" className="flex items-center gap-sm" style={{ color: 'var(--text-muted)', fontWeight: '600' }}>
+                            <FaFilter /> Filter by site
+                        </label>
+                        <select
+                            id="scoreboard-site-filter"
+                            value={activeSiteId}
+                            onChange={(event) => setSelectedSiteId(event.target.value)}
+                            style={{ minWidth: '200px', flex: 1, maxWidth: '320px' }}
+                        >
+                            <option value="all">All Sites</option>
+                            {sites.map(site => (
+                                <option key={site.id} value={site.id}>{site.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+            )}
 
             {/* Content */}
             <div className="flex flex-col gap-lg">
