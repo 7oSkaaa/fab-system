@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
-import { FaTrophy, FaHome, FaFilter } from 'react-icons/fa';
+import { FaTrophy, FaHome, FaFilter, FaUniversity } from 'react-icons/fa';
 
 export const PublicPage = () => {
     const { balloons, teams, sites, getProblemsForSite } = useBalloonContext();
@@ -117,6 +117,15 @@ export const PublicPage = () => {
                                             </span>
                                         )}
                                     </div>
+
+                                    {team.university && (
+                                        <div className="flex items-center gap-xs" style={{ marginBottom: 'var(--space-sm)', color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                                            <FaUniversity aria-hidden="true" />
+                                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={team.university}>
+                                                {team.university}
+                                            </span>
+                                        </div>
+                                    )}
 
                                     {site.problems.length === 0 ? (
                                         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No problems defined.</p>
