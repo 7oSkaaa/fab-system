@@ -43,7 +43,14 @@ export const OperationsHistory = ({ balloons, getTeam, getProblem, getSite }) =>
                             </div>
                             <div className="operations-history-problem">
                                 <span style={{ color: problemColor }}>Problem {problem?.name || '?'}</span>
-                                <strong>{problem?.fullName || problem?.colorName || `Problem ${problem?.name || '?'}`}</strong>
+                                <strong>{problem?.fullName || `Problem ${problem?.name || '?'}`}</strong>
+                                {problem?.colorName && (
+                                    <small className="operations-history-color">
+                                        <i aria-hidden="true" style={{ background: problemColor }} />
+                                        {problem.colorName}
+                                        {problem.color && <code>{problem.color}</code>}
+                                    </small>
+                                )}
                             </div>
                         </div>
 

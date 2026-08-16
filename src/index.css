@@ -439,6 +439,28 @@ body {
   white-space: nowrap;
 }
 
+.operations-history-color {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.operations-history-color i {
+  width: 8px;
+  height: 8px;
+  border: 1px solid color-mix(in srgb, var(--text-main) 18%, transparent);
+  border-radius: 50%;
+}
+
+.operations-history-color code {
+  color: var(--text-dim);
+  font-size: 0.62rem;
+}
+
 .operations-history-events {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
