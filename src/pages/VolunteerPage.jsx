@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
 import { BalloonAlerts } from '../components/BalloonAlerts';
-import { FaBoxOpen, FaClock, FaCheck, FaBullhorn, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity } from 'react-icons/fa';
+import { OperationsHistory } from '../components/OperationsHistory';
+import { FaBoxOpen, FaClock, FaCheck, FaBullhorn, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity, FaHistory, FaTasks } from 'react-icons/fa';
 
 const isInAppBrowser = () => {
     const ua = navigator.userAgent;
@@ -25,6 +26,7 @@ export const VolunteerPage = () => {
     const [selectedSiteId, setSelectedSiteId] = useState('all');
     const [loggingIn, setLoggingIn] = useState(false);
     const [countdown, setCountdown] = useState(15);
+    const [activeView, setActiveView] = useState('queue');
 
     // Auto-refresh every 15 seconds
     useEffect(() => {
@@ -39,13 +41,19 @@ export const VolunteerPage = () => {
     const getTeam = (id) => teams.find(t => t.id === id);
     const getSite = (id) => sites.find(s => s.id === id);
 
-    // Keep the ticket visible until both delivery and publication are complete.
-    let pendingBalloons = balloons.filter(b => !b.delivered || !b.published);
+    const siteBalloons = selectedSiteId === 'all'
+        ? balloons
+        : balloons.filter(balloon => balloon.siteId === selectedSiteId);
 
-    // Apply site filter
-    if (selectedSiteId !== 'all') {
-        pendingBalloons = pendingBalloons.filter(b => b.siteId === selectedSiteId);
-    }
+    // Keep the ticket visible until both delivery and publication are complete.
+    const pendingBalloons = siteBalloons.filter(balloon => !balloon.delivered || !balloon.published);
+    const historyBalloons = siteBalloons
+        .filter(balloon => balloon.delivered || balloon.published)
+        .sort((firstBalloon, secondBalloon) => {
+            const firstActionAt = Math.max(firstBalloon.deliveredAt || 0, firstBalloon.publishedAt || 0, firstBalloon.timestamp || 0);
+            const secondActionAt = Math.max(secondBalloon.deliveredAt || 0, secondBalloon.publishedAt || 0, secondBalloon.timestamp || 0);
+            return secondActionAt - firstActionAt;
+        });
 
     // Undelivered balloons are urgent; within each group, handle the oldest first.
     pendingBalloons.sort(sortByDeliveryPriority);
@@ -73,7 +81,7 @@ export const VolunteerPage = () => {
                 <div className="page-title">
                     <h1 className="page-title-main">🎈 Balloon Operations</h1>
                     <p className="page-title-sub" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {pendingBalloons.length} Pending
+                        {activeView === 'queue' ? `${pendingBalloons.length} Pending` : `${historyBalloons.length} Activity Records`}
                         <span style={{
                             fontSize: '0.75rem',
                             padding: '2px 8px',
@@ -128,14 +136,44 @@ export const VolunteerPage = () => {
                 )}
             </div>
 
+            <div className="operations-view-switcher" role="tablist" aria-label="Balloon operations views">
+                <button
+                    type="button"
+                    id="queue-tab"
+                    role="tab"
+                    aria-selected={activeView === 'queue'}
+                    aria-controls="queue-panel"
+                    className={activeView === 'queue' ? 'active' : ''}
+                    onClick={() => setActiveView('queue')}
+                >
+                    <FaTasks aria-hidden="true" />
+                    <span>Active Queue<small>Balloon actions still waiting</small></span>
+                    <strong>{pendingBalloons.length}</strong>
+                </button>
+                <button
+                    type="button"
+                    id="history-tab"
+                    role="tab"
+                    aria-selected={activeView === 'history'}
+                    aria-controls="history-panel"
+                    className={activeView === 'history' ? 'active' : ''}
+                    onClick={() => setActiveView('history')}
+                >
+                    <FaHistory aria-hidden="true" />
+                    <span>Activity History<small>Delivered and published records</small></span>
+                    <strong>{historyBalloons.length}</strong>
+                </button>
+            </div>
+
             {/* Site Filter */}
             {sites.length > 0 && (
                 <div className="card" style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-md)' }}>
                     <div className="flex items-center gap-md flex-wrap">
-                        <div className="flex items-center gap-sm" style={{ color: 'var(--text-muted)' }}>
+                        <label htmlFor="operations-site-filter" className="flex items-center gap-sm" style={{ color: 'var(--text-muted)' }}>
                             <FaFilter /> <span style={{ fontWeight: '600' }}>Filter by Site:</span>
-                        </div>
+                        </label>
                         <select
+                            id="operations-site-filter"
                             value={selectedSiteId}
                             onChange={(e) => setSelectedSiteId(e.target.value)}
                             style={{ minWidth: '200px', flex: 1, maxWidth: '300px' }}
@@ -149,7 +187,19 @@ export const VolunteerPage = () => {
                 </div>
             )}
 
-            {pendingBalloons.length === 0 ? (
+            <section
+                id={`${activeView}-panel`}
+                role="tabpanel"
+                aria-labelledby={`${activeView}-tab`}
+            >
+            {activeView === 'history' ? (
+                <OperationsHistory
+                    balloons={historyBalloons}
+                    getTeam={getTeam}
+                    getProblem={getProblem}
+                    getSite={getSite}
+                />
+            ) : pendingBalloons.length === 0 ? (
                 <div className="card flex flex-col items-center justify-center" style={{ padding: 'var(--space-xl)', textAlign: 'center' }}>
                     <FaBoxOpen size={48} style={{ color: 'var(--text-dim)', marginBottom: 'var(--space-md)' }} />
                     <h3 style={{ color: 'var(--text-muted)' }}>All Caught Up!</h3>
@@ -224,6 +274,7 @@ export const VolunteerPage = () => {
                     })}
                 </div>
             )}
+            </section>
         </div>
     );
 };
