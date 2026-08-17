@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useBalloonContext } from '../../contexts/BalloonContext';
 import { FaTrash, FaPlus, FaCopy, FaGlobe, FaMapMarkerAlt, FaEdit, FaCheck, FaTimes, FaFileCode } from 'react-icons/fa';
 import { parseProblemYaml } from '../../utils/problemYaml';
+import { balloonFillStyle } from '../../utils/colorContrast';
 
 const BALLOON_COLORS = [
     { name: 'Red', value: '#ef4444' },
@@ -429,7 +430,19 @@ const ProblemBadge = ({ problem, onRemove, onEdit }) => (
         borderRadius: 'var(--radius-md)',
         border: `2px solid ${problem.color}`,
     }}>
-        <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: problem.color, flexShrink: 0 }} />
+        <div style={{
+            ...balloonFillStyle(problem.color),
+            width: '28px',
+            height: '28px',
+            borderRadius: '8px',
+            display: 'grid',
+            placeItems: 'center',
+            flexShrink: 0,
+            fontSize: '0.8rem',
+            fontWeight: 800,
+        }}>
+            {problem.name}
+        </div>
         <div className="flex flex-col" style={{ lineHeight: 1.2 }}>
             <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{problem.name}</span>
             {problem.fullName && (

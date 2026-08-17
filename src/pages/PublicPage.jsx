@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { FaTrophy, FaHome, FaFilter, FaUniversity } from 'react-icons/fa';
+import { balloonFillStyle } from '../utils/colorContrast';
 
 export const PublicPage = () => {
     const { balloons, teams, sites, getProblemsForSite } = useBalloonContext();
@@ -162,7 +163,7 @@ export const PublicPage = () => {
                                                 key={balloon.problem.id}
                                                 className="balloon-slot filled"
                                                 title={`Problem ${balloon.problem.name}${balloon.problem.colorName ? ` — ${balloon.problem.colorName}` : ''} ${balloon.problem.color}`}
-                                                style={{ backgroundColor: balloon.problem.color }}
+                                                style={balloonFillStyle(balloon.problem.color)}
                                             >
                                                 {balloon.problem.name}
                                             </div>

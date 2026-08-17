@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
 import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome, FaSearch, FaChevronDown } from 'react-icons/fa';
+import { balloonFillStyle } from '../utils/colorContrast';
 
 const getTeamLabel = team => `${team.seatNumber || team.name} — ${team.displayName || team.name}${team.university ? ` — ${team.university}` : ''}`;
 
@@ -139,8 +140,12 @@ export const OperationsPage = () => {
                                             style={{
                                                 padding: '10px 18px',
                                                 borderRadius: 'var(--radius-md)',
-                                                border: isSelected ? `2px solid ${p.color}` : '2px solid var(--border-color)',
-                                                background: isSelected ? 'var(--bg-elevated)' : 'transparent',
+                                                ...(isSelected ? balloonFillStyle(p.color) : {
+                                                    border: '2px solid var(--border-color)',
+                                                    background: 'transparent',
+                                                }),
+                                                borderWidth: 2,
+                                                borderStyle: 'solid',
                                                 opacity: isTaken ? 0.5 : 1,
                                                 position: 'relative',
                                                 cursor: 'pointer',
@@ -148,10 +153,29 @@ export const OperationsPage = () => {
                                                 transition: 'all 0.2s',
                                             }}
                                         >
-                                            <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: p.color, display: 'inline-block', marginRight: '6px' }} />
-                                            {p.name}
+                                            <span style={{
+                                                ...balloonFillStyle(p.color),
+                                                width: '22px',
+                                                height: '22px',
+                                                borderRadius: '6px',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                marginRight: '8px',
+                                                fontSize: '0.75rem',
+                                                verticalAlign: 'middle',
+                                            }}>
+                                                {p.name}
+                                            </span>
                                             {p.colorName && (
-                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '400', display: 'block', marginTop: '2px' }}>
+                                                <span style={{
+                                                    fontSize: '0.75rem',
+                                                    color: isSelected ? 'inherit' : 'var(--text-muted)',
+                                                    opacity: isSelected ? 0.88 : 1,
+                                                    fontWeight: '400',
+                                                    display: 'block',
+                                                    marginTop: '2px'
+                                                }}>
                                                     {p.colorName}
                                                 </span>
                                             )}

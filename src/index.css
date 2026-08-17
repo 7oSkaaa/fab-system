@@ -378,7 +378,7 @@ body {
   border: 1px solid color-mix(in srgb, var(--problem-color) 48%, var(--border-color));
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--problem-color) 10%, var(--bg-elevated));
-  color: var(--problem-color);
+  color: var(--problem-ink, var(--text-main));
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.76rem;
   font-weight: 800;
@@ -1154,8 +1154,8 @@ input:focus, select:focus {
 
 .balloon-slot.filled {
   border-style: solid;
-  border-color: transparent;
-  color: white;
+  border-color: var(--balloon-border, transparent);
+  color: var(--balloon-ink, #111827);
   transform: scale(1.08);
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }

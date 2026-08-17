@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { BalloonAlerts } from '../components/BalloonAlerts';
 import { OperationsHistory } from '../components/OperationsHistory';
 import { FaBoxOpen, FaClock, FaCheck, FaBullhorn, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity, FaHistory, FaTasks } from 'react-icons/fa';
+import { balloonFillStyle, problemInk } from '../utils/colorContrast';
 
 const isInAppBrowser = () => {
     const ua = navigator.userAgent;
@@ -236,7 +237,19 @@ export const VolunteerPage = () => {
                                         )}
                                     </div>
                                     <div className="ticket-problem-details">
-                                        <div style={{ fontWeight: '700', fontSize: '0.85rem', color: color, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                        <div style={{ fontWeight: '700', fontSize: '0.85rem', color: problemInk(color), textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{
+                                                ...balloonFillStyle(color),
+                                                width: '28px',
+                                                height: '28px',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                borderRadius: 'var(--radius-sm)',
+                                                fontSize: '0.85rem',
+                                            }}>
+                                                {problem ? problem.name : '?'}
+                                            </span>
                                             Problem {problem ? problem.name : '?'}
                                         </div>
                                         <div className="ticket-problem-name">
