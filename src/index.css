@@ -772,12 +772,21 @@ input:focus, select:focus {
 }
 
 .judge-problem-card.taken {
-  opacity: 0.62;
+  opacity: 0.78;
+}
+
+.judge-problem-card.taken .judge-problem-letter {
+  filter: saturate(0.85);
 }
 
 .judge-problem-card:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
   outline-offset: 2px;
+}
+
+.judge-problem-swatch {
+  position: relative;
+  flex-shrink: 0;
 }
 
 .judge-problem-letter {
@@ -791,6 +800,21 @@ input:focus, select:focus {
   border-radius: 12px;
   font-size: 1rem;
   font-weight: 800;
+}
+
+.judge-problem-check {
+  position: absolute;
+  right: -5px;
+  top: -5px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.58rem;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 
 .judge-problem-copy {
@@ -817,38 +841,28 @@ input:focus, select:focus {
   white-space: nowrap;
 }
 
-.judge-problem-taken {
-  justify-self: start;
-  margin-top: 2px;
-  color: var(--color-primary);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .judge-log-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
-  min-height: 72px;
-  padding: 16px 20px;
+  min-height: 56px;
+  padding: 12px 18px;
   border: 0;
-  border-radius: 18px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-deep) 100%);
+  border-radius: 14px;
+  background: var(--color-primary);
   color: #fff;
   font-family: inherit;
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--color-primary) 32%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--color-primary) 28%, transparent);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .judge-log-button:not(:disabled):hover {
+  background: var(--color-primary-deep);
   transform: translateY(-1px);
-  filter: brightness(1.05);
-  box-shadow: 0 16px 32px color-mix(in srgb, var(--color-primary) 40%, transparent);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--color-primary) 36%, transparent);
 }
 
 .judge-log-button:focus-visible {
@@ -861,41 +875,40 @@ input:focus, select:focus {
   color: var(--text-dim);
   box-shadow: none;
   cursor: not-allowed;
-  filter: none;
   transform: none;
 }
 
 .judge-log-button-icon {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.16);
-  font-size: 1.25rem;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 1.15rem;
 }
 
 .judge-log-button:disabled .judge-log-button-icon {
-  background: color-mix(in srgb, var(--text-dim) 16%, transparent);
+  background: color-mix(in srgb, var(--text-dim) 14%, transparent);
 }
 
 .judge-log-button-copy {
   display: grid;
-  gap: 2px;
+  gap: 1px;
   text-align: left;
 }
 
 .judge-log-button-copy strong {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 800;
   letter-spacing: 0.01em;
 }
 
 .judge-log-button-copy small {
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 600;
-  opacity: 0.86;
+  opacity: 0.88;
 }
 
 /* ===== UTILITIES ===== */
@@ -1414,8 +1427,8 @@ input:focus, select:focus {
   }
 
   .judge-log-button {
-    min-height: 64px;
-    padding: 14px 16px;
+    min-height: 56px;
+    padding: 12px 14px;
   }
 
   .operations-history-summary {

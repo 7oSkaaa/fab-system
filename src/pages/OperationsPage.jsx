@@ -2,8 +2,17 @@ import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
-import { FaPaperPlane, FaExclamationTriangle, FaHome, FaSearch, FaChevronDown } from 'react-icons/fa';
+import { FaCheck, FaExclamationTriangle, FaHome, FaSearch, FaChevronDown } from 'react-icons/fa';
 import { balloonFillStyle } from '../utils/colorContrast';
+
+const BalloonIcon = () => (
+    <svg viewBox="0 0 24 24" width="1.15em" height="1.15em" aria-hidden="true" focusable="false">
+        <path
+            fill="currentColor"
+            d="M12 1.8c3.95 0 7.15 3.35 7.15 7.5 0 3.55-2.2 6.55-5.45 8.35L12 22.2l-1.7-4.55C7.05 15.85 4.85 12.85 4.85 9.3 4.85 5.15 8.05 1.8 12 1.8Zm0 2.3c-2.7 0-4.85 2.3-4.85 5.2 0 2.75 1.7 5.1 4.2 6.45.4.22.9.22 1.3 0 2.5-1.35 4.2-3.7 4.2-6.45 0-2.9-2.15-5.2-4.85-5.2Z"
+        />
+    </svg>
+);
 
 const getTeamLabel = team => `${team.seatNumber || team.name} — ${team.displayName || team.name}${team.university ? ` — ${team.university}` : ''}`;
 
@@ -73,7 +82,7 @@ export const OperationsPage = () => {
     const logHint = !selectedProblemId
         ? 'Choose a problem to continue'
         : takenProblems.has(selectedProblemId)
-            ? `Already taken by ${getWinnerForProblem(selectedProblemId)}`
+            ? `Already logged for ${getWinnerForProblem(selectedProblemId)}`
             : !selectedTeamId
                 ? 'Choose the team that solved it'
                 : `Send ${selectedProblem?.name || 'problem'} balloon to operations`;
@@ -153,15 +162,26 @@ export const OperationsPage = () => {
                                             className={`judge-problem-card${isSelected ? ' selected' : ''}${isTaken ? ' taken' : ''}`}
                                             style={{ '--problem-color': p.color }}
                                             aria-pressed={isSelected}
+                                            aria-label={isTaken ? `${problemTitle}, already logged` : problemTitle}
                                             onClick={() => setSelectedProblemId(p.id)}
                                         >
-                                            <span className="judge-problem-letter" style={balloonFillStyle(p.color)}>
-                                                {p.name}
+                                            <span className="judge-problem-swatch">
+                                                <span className="judge-problem-letter" style={balloonFillStyle(p.color)}>
+                                                    {p.name}
+                                                </span>
+                                                {isTaken && (
+                                                    <span className="judge-problem-check" aria-hidden="true">
+                                                        <FaCheck />
+                                                    </span>
+                                                )}
                                             </span>
                                             <span className="judge-problem-copy">
                                                 <strong title={problemTitle}>{problemTitle}</strong>
-                                                <small>{p.colorName ? `${p.colorName} balloon` : `Problem ${p.name}`}</small>
-                                                {isTaken && <span className="judge-problem-taken">Taken</span>}
+                                                <small>
+                                                    {isTaken
+                                                        ? getWinnerForProblem(p.id)
+                                                        : (p.colorName ? `${p.colorName} balloon` : `Problem ${p.name}`)}
+                                                </small>
                                             </span>
                                         </button>
                                     );
@@ -169,7 +189,7 @@ export const OperationsPage = () => {
                             </div>
                             {selectedProblemId && takenProblems.has(selectedProblemId) && (
                                 <p style={{ color: 'var(--color-warning)', fontSize: '0.9rem', marginTop: 'var(--space-sm)' }}>
-                                    <FaExclamationTriangle /> Taken by: {getWinnerForProblem(selectedProblemId)}
+                                    <FaExclamationTriangle /> Already logged for {getWinnerForProblem(selectedProblemId)}
                                 </p>
                             )}
                         </div>
@@ -250,13 +270,13 @@ export const OperationsPage = () => {
                             disabled={!canLog}
                         >
                             <span className="judge-log-button-icon" aria-hidden="true">
-                                <FaPaperPlane />
+                                <BalloonIcon />
                             </span>
                             <span className="judge-log-button-copy">
-                                <strong>Log First Accepted</strong>
+                                <strong>Log first accepted</strong>
                                 <small>
                                     {canLog
-                                        ? `${selectedProblem?.fullName || selectedProblem?.name} · ${selectedTeam?.displayName || selectedTeam?.name}`
+                                        ? `${selectedProblem?.name} · ${selectedTeam?.displayName || selectedTeam?.name}`
                                         : logHint}
                                 </small>
                             </span>
