@@ -15,21 +15,31 @@ export const PublicPage = () => {
         : sites.filter(site => site.id === activeSiteId);
     const siteAccents = ['var(--color-primary)', 'var(--color-secondary)', 'var(--color-accent)'];
 
+    const teamsWithBalloons = teams.filter(team => balloons.some(balloon => balloon.teamId === team.id));
+
     const siteGroups = visibleSites.map(site => {
-        let siteTeams = teams.filter(t => t.siteId === site.id);
-        siteTeams.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-
-        // Get problems for THIS site (global + site-specific)
         const siteProblems = getProblemsForSite(site.id).sort((a, b) => a.name.localeCompare(b.name));
+        const problemLookup = new Map(siteProblems.map(problem => [problem.id, problem]));
 
-        const teamsData = siteTeams.map(team => {
-            const teamBalloons = balloons.filter(b => b.teamId === team.id);
-            const balloonLookup = new Map(teamBalloons.map(b => [b.problemId, b]));
-            return { ...team, balloonLookup };
-        });
+        const teamsData = teams
+            .filter(team => team.siteId === site.id)
+            .map(team => {
+                const awardedBalloons = balloons
+                    .filter(balloon => balloon.teamId === team.id)
+                    .map(balloon => ({
+                        ...balloon,
+                        problem: problemLookup.get(balloon.problemId)
+                    }))
+                    .filter(balloon => balloon.problem)
+                    .sort((a, b) => a.problem.name.localeCompare(b.problem.name));
 
-        return { ...site, teams: teamsData, problems: siteProblems };
-    });
+                return { ...team, awardedBalloons };
+            })
+            .filter(team => team.awardedBalloons.length > 0)
+            .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+        return { ...site, teams: teamsData };
+    }).filter(site => site.teams.length > 0);
 
     return (
         <div className="container" style={{ paddingTop: 'var(--space-lg)', paddingBottom: 'var(--space-xl)' }}>
@@ -61,10 +71,10 @@ export const PublicPage = () => {
                             onClick={() => setSelectedSiteId('all')}
                         >
                             <span className="scoreboard-site-name"><i aria-hidden="true" /> All sites</span>
-                            <small>{sites.length} sites · {teams.length} teams</small>
+                            <small>{sites.length} sites · {teamsWithBalloons.length} with balloons</small>
                         </button>
                         {sites.map((site, index) => {
-                            const teamCount = teams.filter(team => team.siteId === site.id).length;
+                            const teamCount = teamsWithBalloons.filter(team => team.siteId === site.id).length;
                             return (
                                 <button
                                     type="button"
@@ -75,7 +85,7 @@ export const PublicPage = () => {
                                     onClick={() => setSelectedSiteId(site.id)}
                                 >
                                     <span className="scoreboard-site-name"><i aria-hidden="true" /> {site.name}</span>
-                                    <small>{teamCount} {teamCount === 1 ? 'team' : 'teams'}</small>
+                                    <small>{teamCount} {teamCount === 1 ? 'team' : 'teams'} with balloons</small>
                                 </button>
                             );
                         })}
@@ -85,10 +95,16 @@ export const PublicPage = () => {
 
             {/* Content */}
             <div className="flex flex-col gap-lg">
-                {siteGroups.length === 0 ? (
+                {sites.length === 0 ? (
                     <div className="card text-center" style={{ padding: 'var(--space-xl)' }}>
                         <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>
                             No sites configured yet. Add sites in Admin.
+                        </p>
+                    </div>
+                ) : siteGroups.length === 0 ? (
+                    <div className="card text-center" style={{ padding: 'var(--space-xl)' }}>
+                        <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>
+                            No first-accepted balloons yet{activeSiteId === 'all' ? '.' : ' at this site.'}
                         </p>
                     </div>
                 ) : siteGroups.map(site => (
@@ -102,11 +118,7 @@ export const PublicPage = () => {
                             gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
                             gap: 'var(--space-md)'
                         }}>
-                            {site.teams.length === 0 ? (
-                                <div className="card" style={{ gridColumn: '1 / -1', textAlign: 'center' }}>
-                                    <p style={{ color: 'var(--text-muted)' }}>No teams in this site.</p>
-                                </div>
-                            ) : site.teams.map(team => (
+                            {site.teams.map(team => (
                                 <div key={team.id} className="card" style={{
                                     borderLeft: '4px solid var(--color-primary)'
                                 }}>
@@ -144,25 +156,18 @@ export const PublicPage = () => {
                                         </div>
                                     )}
 
-                                    {site.problems.length === 0 ? (
-                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No problems defined.</p>
-                                    ) : (
-                                        <div className="balloon-grid">
-                                            {site.problems.map(p => {
-                                                const hasBalloon = team.balloonLookup.has(p.id);
-                                                return (
-                                                    <div
-                                                        key={p.id}
-                                                        className={`balloon-slot ${hasBalloon ? 'filled' : ''}`}
-                                                        title={`Problem ${p.name}${p.colorName ? ` — ${p.colorName}` : ''} ${p.color}`}
-                                                        style={hasBalloon ? { backgroundColor: p.color } : {}}
-                                                    >
-                                                        {hasBalloon ? '🎈' : p.name}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
+                                    <div className="balloon-grid">
+                                        {team.awardedBalloons.map(balloon => (
+                                            <div
+                                                key={balloon.problem.id}
+                                                className="balloon-slot filled"
+                                                title={`Problem ${balloon.problem.name}${balloon.problem.colorName ? ` — ${balloon.problem.colorName}` : ''} ${balloon.problem.color}`}
+                                                style={{ backgroundColor: balloon.problem.color }}
+                                            >
+                                                {balloon.problem.name}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             ))}
                         </div>
