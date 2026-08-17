@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useBalloonContext } from '../contexts/BalloonContext';
 import { useAuth } from '../contexts/AuthContext';
-import { FaPaperPlane, FaCheckCircle, FaExclamationTriangle, FaHome, FaSearch, FaChevronDown } from 'react-icons/fa';
+import { FaPaperPlane, FaExclamationTriangle, FaHome, FaSearch, FaChevronDown } from 'react-icons/fa';
 import { balloonFillStyle } from '../utils/colorContrast';
 
 const getTeamLabel = team => `${team.seatNumber || team.name} — ${team.displayName || team.name}${team.university ? ` — ${team.university}` : ''}`;
@@ -66,6 +66,18 @@ export const OperationsPage = () => {
         return t ? (t.displayName ? `${t.name} — ${t.displayName}` : t.name) : 'Unknown Team';
     };
 
+    const selectedProblem = (activeSiteId ? getProblemsForSite(activeSiteId) : problems)
+        .find(problem => problem.id === selectedProblemId);
+    const selectedTeam = siteTeams.find(team => team.id === selectedTeamId);
+    const canLog = Boolean(selectedProblemId && selectedTeamId && !takenProblems.has(selectedProblemId));
+    const logHint = !selectedProblemId
+        ? 'Choose a problem to continue'
+        : takenProblems.has(selectedProblemId)
+            ? `Already taken by ${getWinnerForProblem(selectedProblemId)}`
+            : !selectedTeamId
+                ? 'Choose the team that solved it'
+                : `Send ${selectedProblem?.name || 'problem'} balloon to operations`;
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!activeSiteId || !selectedProblemId || !selectedTeamId) {
@@ -105,7 +117,7 @@ export const OperationsPage = () => {
                     <p style={{ color: 'var(--text-muted)' }}>Please configure sites first.</p>
                 </div>
             ) : (
-                <div className="flex flex-col gap-lg" style={{ maxWidth: '600px', margin: '0 auto' }}>
+                <div className="flex flex-col gap-lg" style={{ maxWidth: '880px', margin: '0 auto' }}>
                     {/* Site Selector */}
                     <div className="card">
                         <label style={{ display: 'block', marginBottom: 'var(--space-sm)', color: 'var(--text-muted)', fontWeight: '600' }}>Current Site:</label>
@@ -128,59 +140,30 @@ export const OperationsPage = () => {
                     <form onSubmit={handleSubmit} className="card judge-entry-form flex flex-col gap-lg">
                         {/* Problem Selection */}
                         <div>
-                            <label style={{ display: 'block', marginBottom: 'var(--space-sm)', color: 'var(--text-muted)', fontWeight: '600' }}>Select Problem:</label>
-                            <div className="flex flex-wrap gap-sm">
+                            <label style={{ display: 'block', marginBottom: 'var(--space-sm)', color: 'var(--text-muted)', fontWeight: '600' }}>Select Problem</label>
+                            <div className="judge-problem-grid">
                                 {(activeSiteId ? getProblemsForSite(activeSiteId) : problems).slice().sort((a, b) => a.name.localeCompare(b.name)).map(p => {
                                     const isTaken = takenProblems.has(p.id);
                                     const isSelected = selectedProblemId === p.id;
+                                    const problemTitle = p.fullName || `Problem ${p.name}`;
                                     return (
-                                        <div
+                                        <button
+                                            type="button"
                                             key={p.id}
+                                            className={`judge-problem-card${isSelected ? ' selected' : ''}${isTaken ? ' taken' : ''}`}
+                                            style={{ '--problem-color': p.color }}
+                                            aria-pressed={isSelected}
                                             onClick={() => setSelectedProblemId(p.id)}
-                                            style={{
-                                                padding: '10px 18px',
-                                                borderRadius: 'var(--radius-md)',
-                                                ...(isSelected ? balloonFillStyle(p.color) : {
-                                                    border: '2px solid var(--border-color)',
-                                                    background: 'transparent',
-                                                }),
-                                                borderWidth: 2,
-                                                borderStyle: 'solid',
-                                                opacity: isTaken ? 0.5 : 1,
-                                                position: 'relative',
-                                                cursor: 'pointer',
-                                                fontWeight: 'bold',
-                                                transition: 'all 0.2s',
-                                            }}
                                         >
-                                            <span style={{
-                                                ...balloonFillStyle(p.color),
-                                                width: '22px',
-                                                height: '22px',
-                                                borderRadius: '6px',
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                marginRight: '8px',
-                                                fontSize: '0.75rem',
-                                                verticalAlign: 'middle',
-                                            }}>
+                                            <span className="judge-problem-letter" style={balloonFillStyle(p.color)}>
                                                 {p.name}
                                             </span>
-                                            {p.colorName && (
-                                                <span style={{
-                                                    fontSize: '0.75rem',
-                                                    color: isSelected ? 'inherit' : 'var(--text-muted)',
-                                                    opacity: isSelected ? 0.88 : 1,
-                                                    fontWeight: '400',
-                                                    display: 'block',
-                                                    marginTop: '2px'
-                                                }}>
-                                                    {p.colorName}
-                                                </span>
-                                            )}
-                                            {isTaken && <FaCheckCircle style={{ position: 'absolute', top: -6, right: -6, color: 'var(--color-success)', background: 'var(--bg-base)', borderRadius: '50%' }} />}
-                                        </div>
+                                            <span className="judge-problem-copy">
+                                                <strong title={problemTitle}>{problemTitle}</strong>
+                                                <small>{p.colorName ? `${p.colorName} balloon` : `Problem ${p.name}`}</small>
+                                                {isTaken && <span className="judge-problem-taken">Taken</span>}
+                                            </span>
+                                        </button>
                                     );
                                 })}
                             </div>
@@ -263,11 +246,20 @@ export const OperationsPage = () => {
 
                         <button
                             type="submit"
-                            className="btn-primary"
-                            style={{ padding: '14px 24px', fontSize: '1.1rem' }}
-                            disabled={!selectedProblemId || !selectedTeamId || takenProblems.has(selectedProblemId)}
+                            className="judge-log-button"
+                            disabled={!canLog}
                         >
-                            <FaPaperPlane /> Log First Accepted
+                            <span className="judge-log-button-icon" aria-hidden="true">
+                                <FaPaperPlane />
+                            </span>
+                            <span className="judge-log-button-copy">
+                                <strong>Log First Accepted</strong>
+                                <small>
+                                    {canLog
+                                        ? `${selectedProblem?.fullName || selectedProblem?.name} · ${selectedTeam?.displayName || selectedTeam?.name}`
+                                        : logHint}
+                                </small>
+                            </span>
                         </button>
 
                         {feedback && (

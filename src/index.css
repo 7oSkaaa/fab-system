@@ -738,6 +738,167 @@ input:focus, select:focus {
   overflow: visible;
 }
 
+.judge-problem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.judge-problem-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  background: var(--bg-panel);
+  color: var(--text-main);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.judge-problem-card:hover {
+  border-color: color-mix(in srgb, var(--problem-color, var(--color-primary)) 55%, var(--border-color));
+  background: var(--bg-hover);
+}
+
+.judge-problem-card.selected {
+  border-color: var(--problem-color, var(--color-primary));
+  background: color-mix(in srgb, var(--problem-color, var(--color-primary)) 12%, var(--bg-card));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--problem-color, var(--color-primary)) 18%, transparent);
+}
+
+.judge-problem-card.taken {
+  opacity: 0.62;
+}
+
+.judge-problem-card:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.judge-problem-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.judge-problem-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.judge-problem-copy strong {
+  overflow: hidden;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.judge-problem-copy small {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.judge-problem-taken {
+  justify-self: start;
+  margin-top: 2px;
+  color: var(--color-primary);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.judge-log-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 72px;
+  padding: 16px 20px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-deep) 100%);
+  color: #fff;
+  font-family: inherit;
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--color-primary) 32%, transparent);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.judge-log-button:not(:disabled):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 16px 32px color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+.judge-log-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 70%, transparent);
+  outline-offset: 3px;
+}
+
+.judge-log-button:disabled {
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+  box-shadow: none;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+
+.judge-log-button-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 1.25rem;
+}
+
+.judge-log-button:disabled .judge-log-button-icon {
+  background: color-mix(in srgb, var(--text-dim) 16%, transparent);
+}
+
+.judge-log-button-copy {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+.judge-log-button-copy strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.judge-log-button-copy small {
+  font-size: 0.78rem;
+  font-weight: 600;
+  opacity: 0.86;
+}
+
 /* ===== UTILITIES ===== */
 .container {
   max-width: 1200px;
@@ -1249,6 +1410,15 @@ input:focus, select:focus {
 
   .ticket-actions {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .judge-problem-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .judge-log-button {
+    min-height: 64px;
+    padding: 14px 16px;
   }
 
   .operations-history-summary {
