@@ -72,49 +72,30 @@ export const contrastInk = (backgroundColor) => (
     relativeLuminance(parseRgb(backgroundColor)) > 0.179 ? '#111827' : '#ffffff'
 );
 
-export const isDarkBalloon = (color) => {
-    const rgb = parseRgb(color);
-    return Boolean(rgb && relativeLuminance(rgb) < 0.14);
-};
-
 export const balloonFillStyle = (backgroundColor) => {
     const color = backgroundColor || '#6b7280';
-    const rgb = parseRgb(color);
+    const rgb = parseRgb(color) || [107, 114, 128];
     const ink = contrastInk(color);
-    const luminance = rgb ? relativeLuminance(rgb) : 0.4;
-    const lightFill = luminance > 0.82;
-    const darkFill = luminance < 0.14;
-    const edge = lightFill
-        ? 'rgba(16, 38, 77, 0.35)'
-        : darkFill
-            ? 'rgba(255, 255, 255, 0.82)'
-            : 'transparent';
+    const luminance = relativeLuminance(rgb);
+    const shadow = luminance < 0.14
+        ? '0 8px 18px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.28)'
+        : luminance > 0.82
+            ? '0 6px 16px rgba(16, 38, 77, 0.14), inset 0 -1px 0 rgba(16, 38, 77, 0.08)'
+            : `0 6px 16px rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.22)`;
 
     return {
         backgroundColor: color,
+        backgroundImage: 'linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0) 46%)',
         color: ink,
         '--balloon-ink': ink,
-        '--balloon-border': edge,
-        border: `2px solid ${edge}`,
-        boxShadow: darkFill
-            ? '0 0 0 1px rgba(255, 255, 255, 0.35)'
-            : lightFill
-                ? '0 0 0 1px rgba(16, 38, 77, 0.12)'
-                : undefined,
+        border: '0',
+        boxShadow: shadow,
     };
 };
 
-export const ticketStripeStyle = (color) => {
-    const fill = color || '#888888';
-    if (!isDarkBalloon(fill)) {
-        return { borderLeft: `6px solid ${fill}` };
-    }
-
-    return {
-        borderLeft: `6px solid ${fill}`,
-        boxShadow: 'inset 8px 0 0 0 rgba(255, 255, 255, 0.78), var(--shadow-md)',
-    };
-};
+export const ticketStripeStyle = (color) => ({
+    borderLeft: `6px solid ${color || '#888888'}`,
+});
 
 export const problemInk = (color, surfaceColor) => {
     const foreground = parseRgb(color);
@@ -153,6 +134,5 @@ export const problemColorVars = (color) => {
     return {
         '--problem-color': background,
         '--problem-ink': problemInk(color),
-        '--problem-edge': isDarkBalloon(color) ? 'rgba(255, 255, 255, 0.72)' : 'transparent',
     };
 };
