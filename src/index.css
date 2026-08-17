@@ -375,13 +375,12 @@ body {
   min-width: 78px;
   min-height: 46px;
   padding: 7px 10px;
-  border: 1px solid color-mix(in srgb, var(--problem-color) 48%, var(--border-color));
+  border: 0;
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--problem-color) 10%, var(--bg-elevated));
-  color: var(--problem-ink, var(--text-main));
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: 800;
+  letter-spacing: 0.02em;
   white-space: nowrap;
 }
 

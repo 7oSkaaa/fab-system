@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaBoxOpen, FaBullhorn, FaCheck, FaClock, FaUniversity } from 'react-icons/fa';
-import { problemColorVars } from '../utils/colorContrast';
+import { balloonFillStyle, problemColorVars } from '../utils/colorContrast';
 
 const formatActionTime = (timestamp) => {
     if (!timestamp) return 'Time unavailable';
@@ -34,7 +34,9 @@ export const OperationsHistory = ({ balloons, getTeam, getProblem, getSite }) =>
                 return (
                     <article key={balloon.id} className="card operations-history-card" style={problemColorVars(problem?.color)}>
                         <div className="operations-history-summary">
-                            <div className="operations-history-seat">Seat {team?.seatNumber || team?.name || '?'}</div>
+                            <div className="operations-history-seat" style={balloonFillStyle(problem?.color)}>
+                                {team?.seatNumber || team?.name || '?'}
+                            </div>
                             <div className="operations-history-team">
                                 <h3>{team ? (team.displayName || team.name) : 'Unknown Team'}</h3>
                                 <div className="operations-history-metadata">
