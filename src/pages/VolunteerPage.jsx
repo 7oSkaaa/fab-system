@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { BalloonAlerts } from '../components/BalloonAlerts';
 import { OperationsHistory } from '../components/OperationsHistory';
 import { FaBoxOpen, FaClock, FaCheck, FaBullhorn, FaHome, FaFilter, FaGoogle, FaSignOutAlt, FaUser, FaSync, FaUniversity, FaHistory, FaTasks } from 'react-icons/fa';
-import { balloonFillStyle, problemInk } from '../utils/colorContrast';
+import { balloonFillStyle, problemInk, ticketStripeStyle } from '../utils/colorContrast';
 
 const isInAppBrowser = () => {
     const ua = navigator.userAgent;
@@ -218,9 +218,7 @@ export const VolunteerPage = () => {
                         const loggedAt = new Date(b.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
                         return (
-                            <div key={b.id} className="card" style={{
-                                borderLeft: `6px solid ${color}`,
-                            }}>
+                            <div key={b.id} className="card" style={ticketStripeStyle(color)}>
                                 <div className="ticket-details">
                                     <div className="ticket-team-details">
                                         <div className="seat-number">Seat {team?.seatNumber || team?.name || '?'}</div>
@@ -242,6 +240,8 @@ export const VolunteerPage = () => {
                                                 ...balloonFillStyle(color),
                                                 width: '28px',
                                                 height: '28px',
+                                                boxSizing: 'border-box',
+                                                flexShrink: 0,
                                                 display: 'inline-flex',
                                                 alignItems: 'center',
                                                 justifyContent: 'center',

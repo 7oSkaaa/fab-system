@@ -359,6 +359,7 @@ body {
   gap: var(--space-md);
   padding: var(--space-md);
   border-left: 5px solid var(--problem-color);
+  box-shadow: var(--shadow-md), inset 6px 0 0 var(--problem-edge, transparent);
 }
 
 .operations-history-summary {
@@ -452,8 +453,9 @@ body {
 .operations-history-color i {
   width: 8px;
   height: 8px;
-  border: 1px solid color-mix(in srgb, var(--text-main) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-main) 35%, transparent);
   border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--problem-edge, transparent);
 }
 
 .operations-history-color code {
@@ -1140,6 +1142,7 @@ input:focus, select:focus {
   aspect-ratio: 1;
   min-width: 38px;
   max-width: 50px;
+  box-sizing: border-box;
   border-radius: var(--radius-md);
   background: var(--bg-elevated);
   border: 2px dashed var(--border-color);

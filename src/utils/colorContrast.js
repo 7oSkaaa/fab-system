@@ -72,19 +72,47 @@ export const contrastInk = (backgroundColor) => (
     relativeLuminance(parseRgb(backgroundColor)) > 0.179 ? '#111827' : '#ffffff'
 );
 
+export const isDarkBalloon = (color) => {
+    const rgb = parseRgb(color);
+    return Boolean(rgb && relativeLuminance(rgb) < 0.14);
+};
+
 export const balloonFillStyle = (backgroundColor) => {
     const color = backgroundColor || '#6b7280';
     const rgb = parseRgb(color);
     const ink = contrastInk(color);
-    const lightFill = rgb ? relativeLuminance(rgb) > 0.82 : false;
+    const luminance = rgb ? relativeLuminance(rgb) : 0.4;
+    const lightFill = luminance > 0.82;
+    const darkFill = luminance < 0.14;
+    const edge = lightFill
+        ? 'rgba(16, 38, 77, 0.35)'
+        : darkFill
+            ? 'rgba(255, 255, 255, 0.82)'
+            : 'transparent';
 
     return {
         backgroundColor: color,
         color: ink,
         '--balloon-ink': ink,
-        borderColor: lightFill ? 'rgba(16, 38, 77, 0.28)' : 'transparent',
-        '--balloon-border': lightFill ? 'rgba(16, 38, 77, 0.28)' : 'transparent',
-        boxShadow: lightFill ? '0 0 0 1px rgba(16, 38, 77, 0.12)' : undefined,
+        '--balloon-border': edge,
+        border: `2px solid ${edge}`,
+        boxShadow: darkFill
+            ? '0 0 0 1px rgba(255, 255, 255, 0.35)'
+            : lightFill
+                ? '0 0 0 1px rgba(16, 38, 77, 0.12)'
+                : undefined,
+    };
+};
+
+export const ticketStripeStyle = (color) => {
+    const fill = color || '#888888';
+    if (!isDarkBalloon(fill)) {
+        return { borderLeft: `6px solid ${fill}` };
+    }
+
+    return {
+        borderLeft: `6px solid ${fill}`,
+        boxShadow: 'inset 8px 0 0 0 rgba(255, 255, 255, 0.78), var(--shadow-md)',
     };
 };
 
@@ -125,5 +153,6 @@ export const problemColorVars = (color) => {
     return {
         '--problem-color': background,
         '--problem-ink': problemInk(color),
+        '--problem-edge': isDarkBalloon(color) ? 'rgba(255, 255, 255, 0.72)' : 'transparent',
     };
 };
