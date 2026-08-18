@@ -6,7 +6,7 @@ import { SiteManager } from '../components/admin/SiteManager';
 import { TeamManager } from '../components/admin/TeamManager';
 import { ProblemManager } from '../components/admin/ProblemManager';
 import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser, FaPlus, FaTimes, FaCrown, FaUserShield, FaGavel, FaListAlt, FaUndo, FaClock, FaCheck, FaBullhorn } from 'react-icons/fa';
-import { problemInk } from '../utils/colorContrast';
+import { balloonFillStyle } from '../utils/colorContrast';
 
 // Account Tab Component with Role Management
 const AccountTab = ({ user, handleLogout }) => {
@@ -203,6 +203,12 @@ const BalloonsManager = ({ balloons, teams, problems, sites, revertDelivery, rev
                     <div key={b.id} className="card balloon-admin-card" style={{ borderLeftColor: color }}>
                         <div className="balloon-admin-content">
                             <div className="balloon-admin-heading">
+                                <div className="balloon-admin-swatch" style={balloonFillStyle(color)}>
+                                    {team?.seatNumber || team?.name || '?'}
+                                </div>
+                                <span className="balloon-admin-letter" style={balloonFillStyle(color)}>
+                                    {problem?.name || '?'}
+                                </span>
                                 <div className="balloon-admin-title">
                                     <span style={{ fontWeight: '700', fontSize: '1rem' }}>
                                         {team ? (team.displayName || team.name) : 'Unknown Team'}
@@ -230,7 +236,7 @@ const BalloonsManager = ({ balloons, teams, problems, sites, revertDelivery, rev
                             </div>
                             <div className="balloon-admin-details">
                                 <div className="balloon-admin-event">
-                                    <span style={{ color: problemInk(color) }}>Problem {problem?.name || '?'}{problem?.colorName ? ` — ${problem.colorName}` : ''}</span>
+                                    <span>Problem {problem?.name || '?'}{problem?.colorName ? ` — ${problem.colorName}` : ''}</span>
                                     <span>{site?.name || 'Unknown site'}</span>
                                     <span>{loggedAt}</span>
                                 </div>

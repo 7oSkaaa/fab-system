@@ -1064,8 +1064,40 @@ input:focus, select:focus {
   flex-wrap: wrap;
 }
 
+.balloon-admin-heading {
+  gap: 12px;
+}
+
+.balloon-admin-swatch {
+  display: grid;
+  place-items: center;
+  min-width: 64px;
+  min-height: 40px;
+  padding: 6px 8px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.balloon-admin-letter {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
 .balloon-admin-title {
   gap: var(--space-sm);
+  flex: 1;
 }
 
 .balloon-admin-university {
