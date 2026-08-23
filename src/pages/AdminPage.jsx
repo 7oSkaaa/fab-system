@@ -5,22 +5,49 @@ import { useAuth } from '../contexts/AuthContext';
 import { SiteManager } from '../components/admin/SiteManager';
 import { TeamManager } from '../components/admin/TeamManager';
 import { ProblemManager } from '../components/admin/ProblemManager';
-import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser, FaPlus, FaTimes, FaCrown, FaUserShield, FaGavel, FaListAlt, FaUndo, FaClock, FaCheck, FaBullhorn } from 'react-icons/fa';
+import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser, FaPlus, FaTimes, FaCrown, FaUserShield, FaGavel, FaListAlt, FaUndo, FaClock, FaCheck, FaBullhorn, FaChevronDown } from 'react-icons/fa';
 import { balloonFillStyle } from '../utils/colorContrast';
 
 const ROLE_LABELS = { superAdmin: 'Super admin', admin: 'Admin', judge: 'Judge' };
-const ROLE_COLORS = {
-    superAdmin: 'linear-gradient(135deg, var(--color-accent), var(--color-primary))',
-    admin: 'var(--color-accent)',
-    judge: 'var(--color-primary)'
+const ROLE_STYLES = {
+    superAdmin: {
+        icon: 'var(--color-warning)',
+        badge: {
+            background: 'rgba(245, 158, 11, 0.14)',
+            color: 'var(--color-warning)',
+            border: '1px solid rgba(245, 158, 11, 0.42)'
+        }
+    },
+    admin: {
+        icon: 'var(--color-primary)',
+        badge: {
+            background: 'rgba(20, 87, 217, 0.12)',
+            color: 'var(--color-primary)',
+            border: '1px solid rgba(20, 87, 217, 0.34)'
+        }
+    },
+    judge: {
+        icon: 'var(--color-success)',
+        badge: {
+            background: 'rgba(22, 163, 74, 0.12)',
+            color: 'var(--color-success)',
+            border: '1px solid rgba(22, 163, 74, 0.34)'
+        }
+    }
 };
 const ROLE_SORT_ORDER = { superAdmin: 0, admin: 1, judge: 2 };
+const ROLE_ICONS = {
+    superAdmin: FaCrown,
+    admin: FaUserShield,
+    judge: FaGavel
+};
 
 // Account Tab Component with Role Management
 const AccountTab = ({ user, handleLogout }) => {
     const { isAdmin, isSuperAdmin, isProtectedSuperAdminEmail, users, addUser, removeUser, role } = useAuth();
     const [newEmail, setNewEmail] = useState('');
     const [newRole, setNewRole] = useState('judge');
+    const [roleMenuOpen, setRoleMenuOpen] = useState(false);
     const [error, setError] = useState('');
 
     const handleAddUser = async () => {
@@ -35,6 +62,7 @@ const AccountTab = ({ user, handleLogout }) => {
         try {
             await addUser(newEmail, newRole);
             setNewEmail('');
+            setRoleMenuOpen(false);
             setError('');
         } catch (err) {
             setError(err.message);
@@ -59,6 +87,9 @@ const AccountTab = ({ user, handleLogout }) => {
         const roleDelta = ROLE_SORT_ORDER[getDisplayRole(a.email, a.role)] - ROLE_SORT_ORDER[getDisplayRole(b.email, b.role)];
         return roleDelta || a.email.localeCompare(b.email);
     });
+    const availableRoles = isSuperAdmin ? ['superAdmin', 'admin', 'judge'] : ['judge'];
+    const CurrentRoleIcon = ROLE_ICONS[currentDisplayRole];
+    const NewRoleIcon = ROLE_ICONS[newRole];
 
     return (
         <div className="card" style={{ maxWidth: '700px' }}>
@@ -69,14 +100,17 @@ const AccountTab = ({ user, handleLogout }) => {
                 <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Signed in as:</span>
                 <p style={{ fontWeight: '600', margin: 'var(--space-xs) 0 0 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {user?.email}
-                    {isSuperAdmin && <FaCrown style={{ color: 'var(--color-accent)' }} title="Super Admin" />}
                     <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
                         fontSize: '0.75rem',
-                        padding: '2px 8px',
+                        fontWeight: 700,
+                        padding: '3px 9px',
                         borderRadius: 'var(--radius-full)',
-                        background: ROLE_COLORS[currentDisplayRole],
-                        color: 'white'
+                        ...ROLE_STYLES[currentDisplayRole].badge
                     }}>
+                        <CurrentRoleIcon style={{ fontSize: '0.72rem' }} />
                         {ROLE_LABELS[currentDisplayRole]}
                     </span>
                 </p>
@@ -100,11 +134,74 @@ const AccountTab = ({ user, handleLogout }) => {
                             placeholder="email@example.com"
                             style={{ flex: 1, minWidth: '200px' }}
                         />
-                        <select aria-label="User role" value={newRole} onChange={(e) => setNewRole(e.target.value)} style={{ width: '160px' }}>
-                            {isSuperAdmin && <option value="superAdmin">👑 Super admin</option>}
-                            {isSuperAdmin && <option value="admin">🛡️ Admin</option>}
-                            <option value="judge">⚖️ Judge</option>
-                        </select>
+                        <div style={{ position: 'relative', width: '170px' }}>
+                            <button
+                                type="button"
+                                aria-label="User role"
+                                aria-haspopup="listbox"
+                                aria-expanded={roleMenuOpen}
+                                onClick={() => setRoleMenuOpen(open => !open)}
+                                style={{
+                                    width: '100%',
+                                    justifyContent: 'space-between',
+                                    background: 'var(--bg-elevated)',
+                                    border: '1px solid var(--border-color)',
+                                    color: 'var(--text-main)'
+                                }}
+                            >
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                                    <NewRoleIcon style={{ color: ROLE_STYLES[newRole].icon }} />
+                                    {ROLE_LABELS[newRole]}
+                                </span>
+                                <FaChevronDown style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }} />
+                            </button>
+                            {roleMenuOpen && (
+                                <div
+                                    role="listbox"
+                                    aria-label="Choose user role"
+                                    style={{
+                                        position: 'absolute',
+                                        top: 'calc(100% + 6px)',
+                                        left: 0,
+                                        right: 0,
+                                        zIndex: 10,
+                                        padding: '4px',
+                                        background: 'var(--bg-card)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: 'var(--radius-md)',
+                                        boxShadow: 'var(--shadow-lg)'
+                                    }}
+                                >
+                                    {availableRoles.map(optionRole => {
+                                        const OptionIcon = ROLE_ICONS[optionRole];
+                                        return (
+                                            <button
+                                                key={optionRole}
+                                                type="button"
+                                                role="option"
+                                                aria-selected={newRole === optionRole}
+                                                onClick={() => {
+                                                    setNewRole(optionRole);
+                                                    setRoleMenuOpen(false);
+                                                }}
+                                                style={{
+                                                    width: '100%',
+                                                    justifyContent: 'flex-start',
+                                                    gap: '8px',
+                                                    padding: '8px 10px',
+                                                    background: newRole === optionRole ? 'var(--bg-elevated)' : 'transparent',
+                                                    border: 'none',
+                                                    color: 'var(--text-main)'
+                                                }}
+                                            >
+                                                <OptionIcon style={{ color: ROLE_STYLES[optionRole].icon }} />
+                                                {ROLE_LABELS[optionRole]}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                         <button onClick={handleAddUser} className="btn-primary">
                             <FaPlus /> Add
                         </button>
@@ -123,6 +220,7 @@ const AccountTab = ({ user, handleLogout }) => {
                             const canRemoveUser = !isCurrentUser
                                 && !isProtectedSuperAdminEmail(u.email)
                                 && (isSuperAdmin || displayRole === 'judge');
+                            const RoleIcon = ROLE_ICONS[displayRole];
                             return (
                                 <div key={u.email} className="flex justify-between items-center" style={{
                                     padding: 'var(--space-sm) var(--space-md)',
@@ -131,18 +229,22 @@ const AccountTab = ({ user, handleLogout }) => {
                                     border: isProtectedSuperAdmin ? '1px solid var(--color-accent)' : '1px solid var(--border-color)'
                                 }}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                        {isProtectedSuperAdmin ? <FaCrown style={{ color: 'var(--color-accent)' }} /> : u.role === 'admin' ? <FaUserShield style={{ color: ROLE_COLORS.admin }} /> : <FaGavel style={{ color: ROLE_COLORS.judge }} />}
+                                        <RoleIcon style={{ color: ROLE_STYLES[displayRole].icon }} />
                                         {u.email}
                                         {isCurrentUser && (
                                             <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)' }}>(you)</span>
                                         )}
                                         <span style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
                                             fontSize: '0.7rem',
-                                            padding: '2px 6px',
+                                            fontWeight: 700,
+                                            padding: '2px 7px',
                                             borderRadius: 'var(--radius-full)',
-                                            background: ROLE_COLORS[displayRole],
-                                            color: 'white'
+                                            ...ROLE_STYLES[displayRole].badge
                                         }}>
+                                            <RoleIcon style={{ fontSize: '0.68rem' }} />
                                             {ROLE_LABELS[displayRole]}
                                         </span>
                                     </span>
