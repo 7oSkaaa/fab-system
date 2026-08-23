@@ -19,8 +19,14 @@ export const db = getFirestore(firebaseApp);
 export const auth = hasFirebaseConfig ? getAuth(firebaseApp) : null;
 export const googleProvider = new GoogleAuthProvider();
 
-// Super admin from env
-const SUPER_ADMIN = import.meta.env.VITE_ADMIN_EMAIL?.toLowerCase() || "";
+// Super admins from env plus protected contest staff accounts.
+const SUPER_ADMINS = [
+    import.meta.env.VITE_ADMIN_EMAIL,
+    "wahab@acpc.global",
+]
+    .filter(Boolean)
+    .map(email => email.toLowerCase())
+    .filter((email, index, emails) => emails.indexOf(email) === index);
 
 // ROLES: 'admin' | 'judge' | 'volunteer'
 
@@ -31,14 +37,14 @@ export const getUsers = async () => {
 
     if (docSnap.exists()) {
         const users = docSnap.data().list || [];
-        if (SUPER_ADMIN && !users.find((u) => u.email === SUPER_ADMIN)) {
-            users.push({ email: SUPER_ADMIN, role: "admin" });
-        }
+        SUPER_ADMINS.forEach(email => {
+            if (!users.find((u) => u.email === email)) {
+                users.push({ email, role: "admin" });
+            }
+        });
         return users;
     } else {
-        const users = SUPER_ADMIN
-            ? [{ email: SUPER_ADMIN, role: "admin" }]
-            : [];
+        const users = SUPER_ADMINS.map(email => ({ email, role: "admin" }));
         await setDoc(docRef, { list: users });
         return users;
     }
@@ -62,7 +68,7 @@ export const addUser = async (email, role) => {
 // Remove user
 export const removeUser = async (email) => {
     const normalizedEmail = email.toLowerCase();
-    if (normalizedEmail === SUPER_ADMIN) {
+    if (SUPER_ADMINS.includes(normalizedEmail)) {
         throw new Error("Cannot remove super admin");
     }
 
@@ -88,5 +94,5 @@ export const isAuthorized = async (email) => {
 
 // Super admin check
 export const isSuperAdmin = (email) => {
-    return email?.toLowerCase() === SUPER_ADMIN;
+    return SUPER_ADMINS.includes(email?.toLowerCase());
 };

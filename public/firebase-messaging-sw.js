@@ -1,3 +1,4 @@
+/* global clients, importScripts */
 self.addEventListener('notificationclick', event => {
     event.notification.close();
     const targetUrl = event.notification.data?.FCM_MSG?.fcmOptions?.link

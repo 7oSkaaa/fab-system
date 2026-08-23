@@ -6,13 +6,22 @@ const invalidTokenCodes = new Set([
     'messaging/registration-token-not-registered',
 ]);
 
+const protectedSuperAdminEmails = new Set(
+    [
+        process.env.SUPER_ADMIN_EMAIL,
+        'wahab@acpc.global',
+    ]
+        .filter(Boolean)
+        .map(email => email.toLowerCase())
+);
+
 const getBearerToken = request => {
     const authorization = request.headers.authorization || '';
     return authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
 };
 
 const isAuthorizedStaff = async email => {
-    if (email?.toLowerCase() === process.env.SUPER_ADMIN_EMAIL?.toLowerCase()) return true;
+    if (protectedSuperAdminEmails.has(email?.toLowerCase())) return true;
     const snapshot = await adminDb.doc('settings/users').get();
     return (snapshot.data()?.list || []).some(user =>
         user.email?.toLowerCase() === email?.toLowerCase() && ['admin', 'judge'].includes(user.role)
@@ -72,9 +81,9 @@ export default async function handler(request, response) {
                         fcmOptions: { link: `${origin}/operations` },
                     },
                 });
-                const invalidSubscriptions = result.responses
-                    .map((item, index) => !item.success && invalidTokenCodes.has(item.error?.code) ? batch[index] : null)
-                    .filter(Boolean);
+                const invalidSubscriptions = result.responses.flatMap((item, index) =>
+                    !item.success && invalidTokenCodes.has(item.error?.code) ? [batch[index]] : []
+                );
                 if (invalidSubscriptions.length) {
                     const cleanup = adminDb.batch();
                     invalidSubscriptions.forEach(subscription => cleanup.delete(subscription.ref));
