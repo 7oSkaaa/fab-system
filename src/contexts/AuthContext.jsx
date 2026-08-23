@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth, hasFirebaseConfig, googleProvider, getUserRole, isSuperAdmin, getUsers, addUser, removeUser, isAuthorized } from '../firebase';
+import React, { createContext, useCallback, useContext, useMemo, useState, useEffect } from 'react';
+import { auth, hasFirebaseConfig, googleProvider, getUserRole, isSuperAdmin as checkSuperAdmin, getUsers, addUser, removeUser, isAuthorized } from '../firebase';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 
 const AuthContext = createContext();
@@ -14,11 +14,11 @@ export const AuthProvider = ({ children }) => {
     const [isSuperAdminUser, setIsSuperAdminUser] = useState(false);
     const [users, setUsers] = useState([]);
 
-    const loadUserData = async (firebaseUser) => {
+    const loadUserData = useCallback(async (firebaseUser) => {
         if (firebaseUser) {
             const userRole = await getUserRole(firebaseUser.email);
             setRole(userRole);
-            setIsSuperAdminUser(isSuperAdmin(firebaseUser.email));
+            setIsSuperAdminUser(checkSuperAdmin(firebaseUser.email));
 
             if (userRole === 'admin') {
                 const allUsers = await getUsers();
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
             setIsSuperAdminUser(false);
             setUsers([]);
         }
-    };
+    }, []);
 
     useEffect(() => {
         if (!hasFirebaseConfig) {
@@ -43,10 +43,10 @@ export const AuthProvider = ({ children }) => {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [loadUserData]);
 
     // Google Sign-In
-    const loginWithGoogle = async () => {
+    const loginWithGoogle = useCallback(async () => {
         if (!hasFirebaseConfig) {
             return { success: false, error: 'Firebase is not configured for this environment.' };
         }
@@ -58,10 +58,10 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             return { success: false, error: error.message };
         }
-    };
+    }, [loadUserData]);
 
     // Login for admin/judge (checks if authorized)
-    const loginAsStaff = async () => {
+    const loginAsStaff = useCallback(async () => {
         if (!hasFirebaseConfig) {
             return { success: false, error: 'Firebase is not configured for this environment.' };
         }
@@ -78,43 +78,46 @@ export const AuthProvider = ({ children }) => {
         } catch (error) {
             return { success: false, error: error.message };
         }
-    };
+    }, [loadUserData]);
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         if (!hasFirebaseConfig) return;
         await signOut(auth);
-    };
+    }, []);
 
-    const addUserWithRole = async (email, userRole) => {
+    const addUserWithRole = useCallback(async (email, userRole) => {
         await addUser(email, userRole);
         const allUsers = await getUsers();
         setUsers(allUsers);
-    };
+    }, []);
 
-    const removeUserByEmail = async (email) => {
+    const removeUserByEmail = useCallback(async (email) => {
         await removeUser(email);
         const allUsers = await getUsers();
         setUsers(allUsers);
-    };
+    }, []);
+
+    const authValue = useMemo(() => ({
+        user,
+        role,
+        isAdmin: role === 'admin',
+        isJudge: role === 'judge',
+        isSuperAdmin: isSuperAdminUser,
+        isSuperAdminEmail: checkSuperAdmin,
+        users,
+        loginWithGoogle,
+        loginAsStaff,
+        logout,
+        addUser: addUserWithRole,
+        removeUser: removeUserByEmail
+    }), [addUserWithRole, isSuperAdminUser, loginAsStaff, loginWithGoogle, logout, removeUserByEmail, role, user, users]);
 
     if (loading) {
         return null;
     }
 
     return (
-        <AuthContext.Provider value={{
-            user,
-            role,
-            isAdmin: role === 'admin',
-            isJudge: role === 'judge',
-            isSuperAdmin: isSuperAdminUser,
-            users,
-            loginWithGoogle,
-            loginAsStaff,
-            logout,
-            addUser: addUserWithRole,
-            removeUser: removeUserByEmail
-        }}>
+        <AuthContext.Provider value={authValue}>
             {children}
         </AuthContext.Provider>
     );

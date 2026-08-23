@@ -8,9 +8,16 @@ import { ProblemManager } from '../components/admin/ProblemManager';
 import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser, FaPlus, FaTimes, FaCrown, FaUserShield, FaGavel, FaListAlt, FaUndo, FaClock, FaCheck, FaBullhorn } from 'react-icons/fa';
 import { balloonFillStyle } from '../utils/colorContrast';
 
+const ROLE_LABELS = { superAdmin: 'Super admin', admin: 'Admin', judge: 'Judge/Staff' };
+const ROLE_COLORS = {
+    superAdmin: 'linear-gradient(135deg, var(--color-accent), var(--color-primary))',
+    admin: 'var(--color-accent)',
+    judge: 'var(--color-primary)'
+};
+
 // Account Tab Component with Role Management
 const AccountTab = ({ user, handleLogout }) => {
-    const { isSuperAdmin, users, addUser, removeUser, role } = useAuth();
+    const { isSuperAdmin, isSuperAdminEmail, users, addUser, removeUser, role } = useAuth();
     const [newEmail, setNewEmail] = useState('');
     const [newRole, setNewRole] = useState('judge');
     const [error, setError] = useState('');
@@ -39,8 +46,10 @@ const AccountTab = ({ user, handleLogout }) => {
         }
     };
 
-    const roleLabels = { admin: '👑 Admin', judge: '⚖️ Judge/Staff' };
-    const roleColors = { admin: 'var(--color-accent)', judge: 'var(--color-primary)' };
+    const getDisplayRole = (email, userRole) => (
+        isSuperAdminEmail(email) ? 'superAdmin' : userRole
+    );
+    const currentDisplayRole = getDisplayRole(user?.email, role);
 
     return (
         <div className="card" style={{ maxWidth: '700px' }}>
@@ -48,7 +57,7 @@ const AccountTab = ({ user, handleLogout }) => {
 
             {/* Current User */}
             <div style={{ marginBottom: 'var(--space-lg)', padding: 'var(--space-md)', background: 'var(--bg-elevated)', borderRadius: 'var(--radius-md)' }}>
-                <label style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Signed in as:</label>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Signed in as:</span>
                 <p style={{ fontWeight: '600', margin: 'var(--space-xs) 0 0 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {user?.email}
                     {isSuperAdmin && <FaCrown style={{ color: 'var(--color-accent)' }} title="Super Admin" />}
@@ -56,10 +65,10 @@ const AccountTab = ({ user, handleLogout }) => {
                         fontSize: '0.75rem',
                         padding: '2px 8px',
                         borderRadius: 'var(--radius-full)',
-                        background: roleColors[role],
+                        background: ROLE_COLORS[currentDisplayRole],
                         color: 'white'
                     }}>
-                        {roleLabels[role]}
+                        {ROLE_LABELS[currentDisplayRole]}
                     </span>
                 </p>
             </div>
@@ -75,13 +84,14 @@ const AccountTab = ({ user, handleLogout }) => {
                     {/* Add New User */}
                     <div className="flex gap-sm" style={{ marginBottom: 'var(--space-md)', flexWrap: 'wrap' }}>
                         <input
+                            aria-label="User email"
                             type="email"
                             value={newEmail}
                             onChange={(e) => setNewEmail(e.target.value)}
                             placeholder="email@example.com"
                             style={{ flex: 1, minWidth: '200px' }}
                         />
-                        <select value={newRole} onChange={(e) => setNewRole(e.target.value)} style={{ width: '140px' }}>
+                        <select aria-label="User role" value={newRole} onChange={(e) => setNewRole(e.target.value)} style={{ width: '140px' }}>
                             <option value="judge">⚖️ Judge</option>
                             <option value="admin">👑 Admin</option>
                         </select>
@@ -96,39 +106,45 @@ const AccountTab = ({ user, handleLogout }) => {
 
                     {/* User List */}
                     <div className="flex flex-col gap-sm">
-                        {users.map(u => (
-                            <div key={u.email} className="flex justify-between items-center" style={{
-                                padding: 'var(--space-sm) var(--space-md)',
-                                background: 'var(--bg-elevated)',
-                                borderRadius: 'var(--radius-sm)',
-                                border: '1px solid var(--border-color)'
-                            }}>
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                    {u.role === 'admin' ? <FaUserShield style={{ color: roleColors.admin }} /> : <FaGavel style={{ color: roleColors.judge }} />}
-                                    {u.email}
-                                    {u.email === user?.email?.toLowerCase() && (
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)' }}>(you)</span>
-                                    )}
-                                    <span style={{
-                                        fontSize: '0.7rem',
-                                        padding: '2px 6px',
-                                        borderRadius: 'var(--radius-full)',
-                                        background: roleColors[u.role],
-                                        color: 'white'
-                                    }}>
-                                        {u.role}
+                        {users.map(u => {
+                            const displayRole = getDisplayRole(u.email, u.role);
+                            const isProtectedSuperAdmin = displayRole === 'superAdmin';
+                            const isCurrentUser = u.email === user?.email?.toLowerCase();
+                            return (
+                                <div key={u.email} className="flex justify-between items-center" style={{
+                                    padding: 'var(--space-sm) var(--space-md)',
+                                    background: 'var(--bg-elevated)',
+                                    borderRadius: 'var(--radius-sm)',
+                                    border: isProtectedSuperAdmin ? '1px solid var(--color-accent)' : '1px solid var(--border-color)'
+                                }}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                        {isProtectedSuperAdmin ? <FaCrown style={{ color: 'var(--color-accent)' }} /> : u.role === 'admin' ? <FaUserShield style={{ color: ROLE_COLORS.admin }} /> : <FaGavel style={{ color: ROLE_COLORS.judge }} />}
+                                        {u.email}
+                                        {isCurrentUser && (
+                                            <span style={{ fontSize: '0.75rem', color: 'var(--color-primary)' }}>(you)</span>
+                                        )}
+                                        <span style={{
+                                            fontSize: '0.7rem',
+                                            padding: '2px 6px',
+                                            borderRadius: 'var(--radius-full)',
+                                            background: ROLE_COLORS[displayRole],
+                                            color: 'white'
+                                        }}>
+                                            {ROLE_LABELS[displayRole]}
+                                        </span>
                                     </span>
-                                </span>
-                                {u.email !== user?.email?.toLowerCase() && (
-                                    <button
-                                        onClick={() => handleRemoveUser(u.email)}
-                                        style={{ background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', padding: '4px' }}
-                                    >
-                                        <FaTimes />
-                                    </button>
-                                )}
-                            </div>
-                        ))}
+                                    {!isCurrentUser && !isProtectedSuperAdmin && (
+                                        <button
+                                            aria-label={`Remove ${u.email}`}
+                                            onClick={() => handleRemoveUser(u.email)}
+                                            style={{ background: 'none', border: 'none', color: 'var(--color-error)', cursor: 'pointer', padding: '4px' }}
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -174,7 +190,7 @@ const BalloonsManager = ({ balloons, teams, problems, sites, revertDelivery, rev
         }
     };
 
-    const sorted = [...balloons].sort((a, b) => b.timestamp - a.timestamp);
+    const sorted = balloons.toSorted((a, b) => b.timestamp - a.timestamp);
 
     if (sorted.length === 0) {
         return (
@@ -399,7 +415,7 @@ export const AdminPage = () => {
                                 : 'var(--text-main)',
                             fontWeight: '600',
                             cursor: 'pointer',
-                            transition: 'all 0.2s',
+                            transition: 'border-color 0.2s, background-color 0.2s, color 0.2s',
                             whiteSpace: 'nowrap'
                         }}
                     >
