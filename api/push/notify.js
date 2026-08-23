@@ -24,7 +24,7 @@ const isAuthorizedStaff = async email => {
     if (protectedSuperAdminEmails.has(email?.toLowerCase())) return true;
     const snapshot = await adminDb.doc('settings/users').get();
     return (snapshot.data()?.list || []).some(user =>
-        user.email?.toLowerCase() === email?.toLowerCase() && ['admin', 'judge'].includes(user.role)
+        user.email?.toLowerCase() === email?.toLowerCase() && ['superAdmin', 'admin', 'judge'].includes(user.role)
     );
 };
 

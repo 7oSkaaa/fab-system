@@ -8,16 +8,17 @@ import { ProblemManager } from '../components/admin/ProblemManager';
 import { FaHome, FaCog, FaMapMarkerAlt, FaUsers, FaPalette, FaTrash, FaSignOutAlt, FaUser, FaPlus, FaTimes, FaCrown, FaUserShield, FaGavel, FaListAlt, FaUndo, FaClock, FaCheck, FaBullhorn } from 'react-icons/fa';
 import { balloonFillStyle } from '../utils/colorContrast';
 
-const ROLE_LABELS = { superAdmin: 'Super admin', admin: 'Admin', judge: 'Judge/Staff' };
+const ROLE_LABELS = { superAdmin: 'Super admin', admin: 'Admin', judge: 'Judge' };
 const ROLE_COLORS = {
     superAdmin: 'linear-gradient(135deg, var(--color-accent), var(--color-primary))',
     admin: 'var(--color-accent)',
     judge: 'var(--color-primary)'
 };
+const ROLE_SORT_ORDER = { superAdmin: 0, admin: 1, judge: 2 };
 
 // Account Tab Component with Role Management
 const AccountTab = ({ user, handleLogout }) => {
-    const { isSuperAdmin, isSuperAdminEmail, users, addUser, removeUser, role } = useAuth();
+    const { isAdmin, isSuperAdmin, isProtectedSuperAdminEmail, users, addUser, removeUser, role } = useAuth();
     const [newEmail, setNewEmail] = useState('');
     const [newRole, setNewRole] = useState('judge');
     const [error, setError] = useState('');
@@ -25,6 +26,10 @@ const AccountTab = ({ user, handleLogout }) => {
     const handleAddUser = async () => {
         if (!newEmail || !newEmail.includes('@')) {
             setError('Please enter a valid email');
+            return;
+        }
+        if (!isSuperAdmin && newRole !== 'judge') {
+            setError('Admins can only add judges');
             return;
         }
         try {
@@ -47,9 +52,13 @@ const AccountTab = ({ user, handleLogout }) => {
     };
 
     const getDisplayRole = (email, userRole) => (
-        isSuperAdminEmail(email) ? 'superAdmin' : userRole
+        isProtectedSuperAdminEmail(email) || userRole === 'superAdmin' ? 'superAdmin' : userRole
     );
     const currentDisplayRole = getDisplayRole(user?.email, role);
+    const sortedUsers = users.toSorted((a, b) => {
+        const roleDelta = ROLE_SORT_ORDER[getDisplayRole(a.email, a.role)] - ROLE_SORT_ORDER[getDisplayRole(b.email, b.role)];
+        return roleDelta || a.email.localeCompare(b.email);
+    });
 
     return (
         <div className="card" style={{ maxWidth: '700px' }}>
@@ -74,11 +83,11 @@ const AccountTab = ({ user, handleLogout }) => {
             </div>
 
             {/* User Management - Only for Admins */}
-            {isSuperAdmin && (
+            {isAdmin && (
                 <div style={{ marginBottom: 'var(--space-lg)' }}>
                     <h4 style={{ marginTop: 0, marginBottom: 'var(--space-md)' }}>👥 Manage Users</h4>
                     <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: 'var(--space-md)' }}>
-                        <strong>Admins</strong> can access Admin + Judge pages. <strong>Judges</strong> can only enter balloons.
+                        <strong>Super admins</strong> can add any role. <strong>Admins</strong> can add judges only.
                     </p>
 
                     {/* Add New User */}
@@ -91,9 +100,10 @@ const AccountTab = ({ user, handleLogout }) => {
                             placeholder="email@example.com"
                             style={{ flex: 1, minWidth: '200px' }}
                         />
-                        <select aria-label="User role" value={newRole} onChange={(e) => setNewRole(e.target.value)} style={{ width: '140px' }}>
+                        <select aria-label="User role" value={newRole} onChange={(e) => setNewRole(e.target.value)} style={{ width: '160px' }}>
+                            {isSuperAdmin && <option value="superAdmin">👑 Super admin</option>}
+                            {isSuperAdmin && <option value="admin">🛡️ Admin</option>}
                             <option value="judge">⚖️ Judge</option>
-                            <option value="admin">👑 Admin</option>
                         </select>
                         <button onClick={handleAddUser} className="btn-primary">
                             <FaPlus /> Add
@@ -106,10 +116,13 @@ const AccountTab = ({ user, handleLogout }) => {
 
                     {/* User List */}
                     <div className="flex flex-col gap-sm">
-                        {users.map(u => {
+                        {sortedUsers.map(u => {
                             const displayRole = getDisplayRole(u.email, u.role);
                             const isProtectedSuperAdmin = displayRole === 'superAdmin';
                             const isCurrentUser = u.email === user?.email?.toLowerCase();
+                            const canRemoveUser = !isCurrentUser
+                                && !isProtectedSuperAdminEmail(u.email)
+                                && (isSuperAdmin || displayRole === 'judge');
                             return (
                                 <div key={u.email} className="flex justify-between items-center" style={{
                                     padding: 'var(--space-sm) var(--space-md)',
@@ -133,7 +146,7 @@ const AccountTab = ({ user, handleLogout }) => {
                                             {ROLE_LABELS[displayRole]}
                                         </span>
                                     </span>
-                                    {!isCurrentUser && !isProtectedSuperAdmin && (
+                                    {canRemoveUser && (
                                         <button
                                             aria-label={`Remove ${u.email}`}
                                             onClick={() => handleRemoveUser(u.email)}

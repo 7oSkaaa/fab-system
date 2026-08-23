@@ -28,7 +28,7 @@ const SUPER_ADMINS = [
     .map(email => email.toLowerCase())
     .filter((email, index, emails) => emails.indexOf(email) === index);
 
-// ROLES: 'admin' | 'judge' | 'volunteer'
+// ROLES: 'superAdmin' | 'admin' | 'judge' | 'volunteer'
 
 // Get all users with roles
 export const getUsers = async () => {
@@ -38,13 +38,16 @@ export const getUsers = async () => {
     if (docSnap.exists()) {
         const users = docSnap.data().list || [];
         SUPER_ADMINS.forEach(email => {
-            if (!users.find((u) => u.email === email)) {
-                users.push({ email, role: "admin" });
+            const existing = users.find((u) => u.email === email);
+            if (existing) {
+                existing.role = "superAdmin";
+            } else {
+                users.push({ email, role: "superAdmin" });
             }
         });
         return users;
     } else {
-        const users = SUPER_ADMINS.map(email => ({ email, role: "admin" }));
+        const users = SUPER_ADMINS.map(email => ({ email, role: "superAdmin" }));
         await setDoc(docRef, { list: users });
         return users;
     }
@@ -55,12 +58,13 @@ export const addUser = async (email, role) => {
     const docRef = doc(db, "settings", "users");
     const users = await getUsers();
     const normalizedEmail = email.toLowerCase();
+    const normalizedRole = SUPER_ADMINS.includes(normalizedEmail) ? "superAdmin" : role;
 
     const existing = users.find((u) => u.email === normalizedEmail);
     if (existing) {
-        existing.role = role;
+        existing.role = normalizedRole;
     } else {
-        users.push({ email: normalizedEmail, role });
+        users.push({ email: normalizedEmail, role: normalizedRole });
     }
     await setDoc(docRef, { list: users });
 };
@@ -69,7 +73,7 @@ export const addUser = async (email, role) => {
 export const removeUser = async (email) => {
     const normalizedEmail = email.toLowerCase();
     if (SUPER_ADMINS.includes(normalizedEmail)) {
-        throw new Error("Cannot remove super admin");
+        throw new Error("Cannot remove protected super admin");
     }
 
     const docRef = doc(db, "settings", "users");

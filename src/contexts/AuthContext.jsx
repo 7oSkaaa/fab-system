@@ -18,9 +18,9 @@ export const AuthProvider = ({ children }) => {
         if (firebaseUser) {
             const userRole = await getUserRole(firebaseUser.email);
             setRole(userRole);
-            setIsSuperAdminUser(checkSuperAdmin(firebaseUser.email));
+            setIsSuperAdminUser(userRole === 'superAdmin' || checkSuperAdmin(firebaseUser.email));
 
-            if (userRole === 'admin') {
+            if (['admin', 'superAdmin'].includes(userRole)) {
                 const allUsers = await getUsers();
                 setUsers(allUsers);
             }
@@ -100,10 +100,10 @@ export const AuthProvider = ({ children }) => {
     const authValue = useMemo(() => ({
         user,
         role,
-        isAdmin: role === 'admin',
+        isAdmin: ['admin', 'superAdmin'].includes(role),
         isJudge: role === 'judge',
         isSuperAdmin: isSuperAdminUser,
-        isSuperAdminEmail: checkSuperAdmin,
+        isProtectedSuperAdminEmail: checkSuperAdmin,
         users,
         loginWithGoogle,
         loginAsStaff,
