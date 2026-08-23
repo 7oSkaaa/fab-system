@@ -134,7 +134,7 @@ const AccountTab = ({ user, handleLogout }) => {
                             placeholder="email@example.com"
                             style={{ flex: 1, minWidth: '200px' }}
                         />
-                        <div style={{ position: 'relative', width: '170px' }}>
+                        <div style={{ position: 'relative', flex: '0 0 170px', minWidth: '170px' }}>
                             <button
                                 type="button"
                                 aria-label="User role"
@@ -143,17 +143,25 @@ const AccountTab = ({ user, handleLogout }) => {
                                 onClick={() => setRoleMenuOpen(open => !open)}
                                 style={{
                                     width: '100%',
+                                    height: '50px',
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     justifyContent: 'space-between',
+                                    gap: '10px',
+                                    padding: '0 14px',
                                     background: 'var(--bg-elevated)',
-                                    border: '1px solid var(--border-color)',
-                                    color: 'var(--text-main)'
+                                    border: '2px solid var(--border-color)',
+                                    borderRadius: 'var(--radius-md)',
+                                    color: 'var(--text-main)',
+                                    fontWeight: 600,
+                                    lineHeight: 1
                                 }}
                             >
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                                    <NewRoleIcon style={{ color: ROLE_STYLES[newRole].icon }} />
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                                    <NewRoleIcon style={{ color: ROLE_STYLES[newRole].icon, flexShrink: 0 }} />
                                     {ROLE_LABELS[newRole]}
                                 </span>
-                                <FaChevronDown style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }} />
+                                <FaChevronDown style={{ color: 'var(--text-muted)', fontSize: '0.75rem', flexShrink: 0 }} />
                             </button>
                             {roleMenuOpen && (
                                 <div
@@ -167,9 +175,10 @@ const AccountTab = ({ user, handleLogout }) => {
                                         zIndex: 10,
                                         padding: '4px',
                                         background: 'var(--bg-card)',
-                                        border: '1px solid var(--border-color)',
+                                        border: '2px solid var(--border-color)',
                                         borderRadius: 'var(--radius-md)',
-                                        boxShadow: 'var(--shadow-lg)'
+                                        boxShadow: 'var(--shadow-lg)',
+                                        overflow: 'hidden'
                                     }}
                                 >
                                     {availableRoles.map(optionRole => {
@@ -186,15 +195,21 @@ const AccountTab = ({ user, handleLogout }) => {
                                                 }}
                                                 style={{
                                                     width: '100%',
+                                                    minHeight: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
                                                     justifyContent: 'flex-start',
                                                     gap: '8px',
-                                                    padding: '8px 10px',
+                                                    padding: '0 10px',
                                                     background: newRole === optionRole ? 'var(--bg-elevated)' : 'transparent',
                                                     border: 'none',
-                                                    color: 'var(--text-main)'
+                                                    borderRadius: 'var(--radius-sm)',
+                                                    color: 'var(--text-main)',
+                                                    fontWeight: 600,
+                                                    textAlign: 'left'
                                                 }}
                                             >
-                                                <OptionIcon style={{ color: ROLE_STYLES[optionRole].icon }} />
+                                                <OptionIcon style={{ color: ROLE_STYLES[optionRole].icon, flexShrink: 0 }} />
                                                 {ROLE_LABELS[optionRole]}
                                             </button>
                                         );
